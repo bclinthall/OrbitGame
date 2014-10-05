@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="jquery-2.1.1.min.js"></script>
+        <style>
+            body{
+                position: absolute;
+                top:0;
+                left:0;
+                bottom: 0;
+                right: 0;
+                margin:0;
+            }
+            #controls{
+                position: fixed;
+                top: 10px;
+                left: 10px;
+            }
+            #myCanvas{
+                position: absolute;
+                top:0;
+                left:0;
+                bottom: 0;
+                right: 0;
+                margin:0;
+                cursor: crosshair;
+            }
+            input{
+                width: 50px;
+            }
+        </style>
+        
+        <script type="text/javascript" src="univKeplar.js"></script>
+        <script type="text/javascript">
+            var canvas; 
+            var context; 
+            var canvasHeigth;
+            var canvasWidth;
+            var orbitalCalc = new OrbitalCalculator();
+            var mouse = {rx:null,ry:null, size: 5};
+            var ball = {rx:100,ry:100, vx:0, vy:0, size: 20};
+            var time = 0;
+            var timeInit = 0;
+            var eAngle = 2 * Math.PI;
+            var mouseMoved = false;
+            var reqAnimFrame = 
+                window.requestAnimationFrame       || 
+                window.mozRequestAnimationFrame    ||
+                window.webkitRequestAnimationFrame ||
+                window.msRequestAnimationFrame     ||
+                window.oRequestAnimationFrame;
+            function getVal(id){
+                return parseFloat($("#"+id).val());
+            }/*
+            function onStart(){
+                context.clearRect(0,0,canvasWidth,canvasHeight);
+                context.fillRect(249, 249, 3,3);
+                var v = new Float32Array([getVal("vx"), getVal("vy"), 0]);
+                var r = new Float32Array([getVal("rx"), getVal("ry"), 0]);
+                context.fillStyle = "#F00";
+                context.fillRect(r[0]+250, 250-r[1],3,3);
+                context.fillStyle = "#000";
+                //try vx=1; vy=1; rx=0; ry=70; grav = 100;
+                //gets weird at -1,-1,0,70,70
+                var grav = getVal("grav");
+                orbitalCalc.setInitialConds(r[0], r[1], v[0], v[1], grav);
+                var pos;
+                for(var t=0; t<300; t++){
+                    pos = orbitalCalc.atTime(t);
+                    
+                    pos.rx = pos.rx+250;
+                    pos.ry = 250-pos.ry;
+                    console.log(pos);
+                    context.fillRect(pos.rx, pos.ry, 1,1);
+                }
+            }*/
+            var canvasOffset;
+            var resetTime = false;
+            function recalibrate(timestamp){
+                timeInit = timestamp;
+                orbitalCalc.setInitialConds(ball.rx - mouse.rx, ball.ry - mouse.ry, ball.vx, ball.vy, getVal("grav")) //feed this canvas ball vector minus canvas mouse vector; 
+            }
+            function refreshMouse(timestamp){
+                //if(!sunBounce(false)){
+                    mouse.rx = mouseMoved.x;
+                    mouse.ry = mouseMoved.y;
+                    mouseMoved = false;
+                    recalibrate(timestamp);
+                //}
+            }
+            function mouseMove(e){
+                mouseMoved = {x:e.pageX - canvasOffset.left, y: canvasHeight - (e.pageY - canvasOffset.top)};
+                //drawPath();
+                //context.fillRect(mouse.rx, mouse.ry, 1,1);
+            }
+            var pos = {};
+            function get_mag(ball, rOrV){
+                return Math.sqrt( Math.pow(ball[rOrV+"x"],2) + Math.pow(ball[rOrV+"y"],2) )
+            }
+            function get_theta(ball, rOrV){
+                return Math.atan2(ball[rOrV+"x"], ball[rOrV+"y"]);
+            }
+            function get_rtheta(ball){
+                return get_theta(ball, "r");
+            }
+            function get_vtheta(ball){
+                return get_theta(ball, "v");
+            }
+            function sunBounce(bounce){
+                ball.rmag = Math.sqrt(Math.pow(ball.rx-mouse.rx,2) + Math.pow(ball.ry-mouse.ry,2));
+                if(ball.rmag < ball.size + mouse.size){
+                    bounce = true;
+                    /*ball.vmag = get_mag(ball, "v");
+                    ball.rtheta = get_rtheta(ball);
+                    ball.rdelta = ball.size + mouse.size - ball.rmag;
+                    ball.rx+= ball.rdelta * Math.cos(ball.rtheta) * (ball.rx-mouse.rx)/Math.abs(ball.rx-mouse.rx);
+                    ball.ry+= ball.rdelta * Math.sin(ball.rtheta) * (ball.ry-mouse.ry)/Math.abs(ball.ry-mouse.ry);;
+                    mouse.rtheta = get_rtheta(ball);
+                    ball.vtheta = get_vtheta(ball);
+                    ball.vtheta = 3*ball.vtheta + Math.PI - ball.rtheta;
+                    ball.vx = ball.vmag * Math.cos(ball.vtheta);
+                    ball.vy = ball.vmag * Math.sin(ball.vtheta);*/
+                    
+                }
+                return bounce;
+            }
+            function bounce(){
+                var bounce = false;
+                if(ball.rx<=ball.size){
+                    ball.rx = ball.size;
+                    ball.vx = -ball.vx;
+                    bounce=true;
+                }
+                if(ball.rx>=canvasWidth-ball.size){
+                    ball.rx = canvasWidth - ball.size;
+                    ball.vx = -ball.vx;
+                    bounce=true;
+                }
+                if(canvasHeight - ball.ry <= ball.size){
+                    ball.ry = canvasHeight-ball.size;
+                    ball.vy = -ball.vy;
+                    bounce=true;
+                }
+                if(canvasHeight - ball.ry >= canvasHeight - ball.size){
+                    ball.ry = ball.size;
+                    ball.vy = -ball.vy;
+                    bounce=true;
+                }
+                return bounce;
+            }
+            function drawPos(time, size){
+                pos = orbitalCalc.atTime(time);  //this spits out canvas ball vector minus canvas mouse vector;
+                if(!pos){
+                    pos.rx = 100;
+                    pos.ry = 100;
+                }
+                context.beginPath();
+                context.arc(pos.rx + mouse.rx, canvasHeight - (pos.ry + mouse.ry), size, 0, eAngle);
+                context.stroke();
+                
+            }
+            function drawSun(){
+                context.beginPath();
+                context.arc(mouse.rx, canvasHeight - mouse.ry, mouse.size, 0, eAngle);
+                context.stroke();
+                
+            }
+            function drawBall(time, size){
+                pos = orbitalCalc.atTime(time);  //this spits out canvas ball vector minus canvas mouse vector;
+                if(pos){
+                    ball.rx = pos.rx + mouse.rx;
+                    ball.ry = pos.ry + mouse.ry;
+                    ball.vx = pos.vx;
+                    ball.vy = pos.vy;
+                }else{
+                    ball.rx = 100;
+                    ball.ry = 100;
+                    ball.vx = 0;
+                    ball.vy = 0;
+                    recalibrate(time+timeInit);
+                }
+                var bounced = bounce();
+                if(bounced){
+                    recalibrate(time + timeInit);
+                }
+                var sunBounced = sunBounce(false);
+                if(sunBounced){
+                    context.fillRect(0,0,canvasWidth, canvasHeight);
+                    ball.rx = 100;
+                    ball.ry = 100;
+                    ball.vx = 0;
+                    ball.vy = 0;
+                    recalibrate(time+timeInit);
+                }
+                context.fillStyle = '#8ED6FF';
+                context.beginPath();
+                context.arc(ball.rx, canvasHeight - ball.ry, size, 0, eAngle);
+                context.fill();
+                drawSun();
+                $("#speed").text(Math.round(Math.sqrt(Math.pow(ball.vx,2)+Math.pow(ball.vy,2))*100) + " e: "+pos.e)
+                return sunBounced;
+            }
+            function drawPath(startTime){
+                endTime = startTime + 100;
+                for(var i = 0; i<10; i++){
+                    drawPos(startTime + i*250, 1);
+                }
+            }
+            var pos = {};
+            function drawFrame(timestamp){
+                var sunBounced;
+                if(mouse.rx){
+                    context.clearRect(0,0,canvasWidth,canvasHeight);
+                    time = (timestamp - timeInit);
+                    sunBounced = drawBall(time, ball.size);
+                    if(OrbitalCalculator.drawPath) drawPath(time);
+                }
+                if(mouseMoved){
+                    refreshMouse(timestamp)
+                }
+                reqAnimFrame(drawFrame);
+            }
+            function resize(){
+                canvasWidth = $(window).width();
+                canvasHeight = $(window).height();
+                canvas.prop({
+                    width: canvasWidth,
+                    height: canvasHeight
+                });
+            }
+            $(window).resize(resize);
+            function setShowPath(){
+                OrbitalCalculator.drawPath = $("#showPath").prop("checked");
+            }
+            $(function(){
+                $("#showPath").change(setShowPath);
+                setShowPath();
+                canvas = document.getElementById("myCanvas");
+                context = canvas.getContext("2d");
+                canvas = $(canvas);
+                canvasOffset = $(canvas).offset();
+                resize();
+                $(window).resize(resize);
+                $(canvas).on("mousemove", mouseMove);
+                reqAnimFrame(drawFrame);
+                
+            })
+        </script>
+    </head>
+    <body>
+        <canvas width="500" height="500" id="myCanvas"></canvas>
+        <div id="controls" >
+            <!--<button id="start" onclick="onStart();">Start</button>vx:<input id="vx"> vy:<input id="vy"> rx:<input id="rx"> ry:<input id="ry"> -->
+            grav:<input type="number" value="5" id="grav">
+            
+            Show Path: <input id="showPath" type ="checkbox"><div>Major Radius: <span id="alpha"></span></div><div>speed:<span id="speed"></span></div>
+        </div>
+        
+    </body>
+</html>

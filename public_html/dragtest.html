@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Drag Test</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="jquery-2.1.1.min.js"></script>
+        <style>
+            body{
+                position: absolute;
+                top:0;
+                left:0;
+                bottom: 0;
+                right: 0;
+                margin:0;
+            }
+            #controls{
+                position: fixed;
+                top: 10px;
+                left: 10px;
+            }
+            #myCanvas{
+                position: absolute;
+                top:0;
+                left:0;
+                bottom: 0;
+                right: 0;
+                margin:0;
+                cursor: crosshair;
+            }
+            input{
+                width: 50px;
+            }
+        </style>
+        <script>
+            var canvas;
+            var context;
+            var canvasHeight;
+            var canvasWidth;
+            var dragging = false;
+            var eAngle = 2 * Math.PI;
+            var reqAnimFrame = 
+                window.requestAnimationFrame       || 
+                window.mozRequestAnimationFrame    ||
+                window.webkitRequestAnimationFrame ||
+                window.msRequestAnimationFrame     ||
+                window.oRequestAnimationFrame;
+        
+            function resize(){
+                canvasWidth = $(window).width();
+                canvasHeight = $(window).height();
+                canvas.prop({
+                    width: canvasWidth,
+                    height: canvasHeight
+                });
+            }
+            var sun = {
+                x: 100,
+                y: 100,
+                offsetX: 0,
+                offsetY: 0,
+                size: 10,
+            }
+            
+            function drawSun(){
+                context.clearRect(0,0,canvasWidth, canvasHeight)
+                context.beginPath();
+                context.arc(sun.x, canvasHeight - sun.y, sun.size, 0, eAngle);
+                context.stroke();
+                reqAnimFrame(drawSun);
+            }
+            function onMouseDown(e){
+                sun.offsetX = e.pageX - sun.x;
+                sun.offsetY = e.pageY - (canvasHeight - sun.y);
+                if(Math.sqrt(Math.pow(sun.offsetX,2) + Math.pow(sun.offsetY,2))<sun.size){
+                    dragging = true;
+                }
+            }
+            function onMouseUp(){
+                dragging = false;
+            }
+            function onMouseMove(e){
+                if(!dragging) return;
+                sun.x = sun.offsetX + e.pageX;
+                sun.y = canvasHeight - (sun.offsetY - e.pageY);
+            }
+            $(function(){
+                canvas = document.getElementById("myCanvas");
+                context = canvas.getContext("2d");
+                canvas = $(canvas);
+                canvasOffset = $(canvas).offset();
+                resize();
+                $(window).resize(resize);
+                drawSun();
+                canvas.mousedown(onMouseDown);
+                canvas.mouseup(onMouseUp);
+                canvas.mousemove(onMouseMove);
+
+            })
+        </script>
+    </head>
+    <body>
+        <canvas width="500" height="500" id="myCanvas"></canvas>
+    </body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Draw</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="jquery-2.1.1.min.js"></script>
+        <style>
+            #myCanvas{
+                border: 1px solid black;
+            }
+            body{
+                margin:0;
+            }
+        </style>
+        <script type="text/javascript">
+            var eAngle = 2 * Math.PI;
+            var canvasTop, canvasLeft, width, height;
+            function resize(){
+                var canvas  = $("#myCanvas");
+                width = $(window).width();
+                height = $(window).height();
+                canvas.width(width);
+                canvas.height(height);
+                canvas.prop({
+                    width: width,
+                    height: height
+                });
+                var offset = canvas.offset();
+                canvasTop = offset.top;
+                canvasLeft = offset.left;
+                
+            }
+            $(window).resize(resize);
+            $(function(){
+                resize();
+                var canvas  = document.getElementById("myCanvas");
+                var context = canvas.getContext("2d");
+                $("#myCanvas").on("mousemove", function(e){
+                    context.clearRect(0,0,width,height);
+                    context.beginPath();
+                    context.arc(e.pageX - canvasTop, e.pageY - canvasLeft, 10, 0, eAngle);
+                    context.stroke();
+                })
+                
+            })
+        </script>
+    </head>
+    <body>
+        <canvas id="myCanvas" width="500" height="500"></canvas>
+    </body>
+</html>

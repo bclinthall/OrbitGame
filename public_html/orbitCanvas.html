@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="jquery-2.1.1.min.js"></script>
+        <style>
+            body{
+                position: absolute;
+                top:0;
+                left:0;
+                bottom: 0;
+                right: 0;
+                margin:0;
+            }
+            #controls{
+                position: fixed;
+                top: 10px;
+                left: 10px;
+            }
+            #myCanvas{
+                cursor: crosshair;
+            }
+        </style>
+        <script>
+            var friction = 0;
+            var grav = 10;
+            function Ball(context){
+                var x = {
+                    v: 0,
+                    pos: 100,
+                    max: function (){return $(window).width()},
+                    css: "left",
+                    size: 20
+                }
+                var y = {
+                    v: 0,
+                    pos: 100,
+                    max: function (){return $(window).height()},
+                    css: "top",
+                    size: 20
+                }
+                
+                function doAxis(axis, addendum){
+                    var max = axis.max();
+                    if(axis.pos<=0){
+                        axis.pos = 0;
+                        axis.v = 0-axis.v;
+                    }else if(axis.pos>=(max-axis.size)){
+                        axis.pos = max-axis.size;
+                        axis.v = 0-axis.v;
+                    }else{
+                        axis.v+=addendum;
+                    }
+                    
+                    axis.pos += axis.v;
+                }
+                var i = 0;
+                function correct(num){
+                    var range = 20;
+                    if(Math.abs(num)<range){
+                        num = num < 0 ? -range : range;
+                    }
+                    return num;
+                }
+                function draw(){
+                    context.clearRect(0,0,width,height);
+                    context.beginPath();
+                    context.arc(x.pos, y.pos, 20, 0, eAngle);
+                    //context.endPath();
+                    context.stroke();
+                    context.beginPath();
+                    /*if(mouse.x){
+                        context.arc(mouse.x, mouse.y, 1, 0, eAngle);
+                        //context.endPath();
+                        context.stroke();
+                    }*/
+                    reqAnimFrame(anim);
+                }
+                var ticks = -1;
+                var prevTimeStamp;
+                var dur, times;
+                function anim(timeStamp){
+                    if(mouse.x && mouse.y){
+
+                        if(timeStamp && prevTimeStamp){
+                            ticks++;
+                            var logInt = 100;
+                            dur = timeStamp - prevTimeStamp;
+                            times = Math.ceil(dur/10);
+                            for(var i=0; i<times; i++){
+                                fall();
+                            }
+                            if(ticks<logInt){
+                                console.log("times", times);
+                            }
+                        }
+                        if(timeStamp){
+                            prevTimeStamp = timeStamp;
+                        }
+                        
+                    }
+                    draw();
+                }
+                var r, v, rx, ry, fx, fy, f, rtheta, xfric, yfric, vtheta, vnewtheta;
+                function fall(){
+
+
+                    i++;
+                    rx = mouse.x - x.pos;
+                    ry = mouse.y - y.pos;
+                    rtheta = Math.atan2(ry,rx);
+                    vtheta = Math.atan2(y.v, x.v);
+                    /*r = Math.sqrt(Math.pow(rx,2) + Math.pow(ry,2));
+                    if(r<=12){
+                        v = Math.sqrt(Math.pow(x.v,2) + Math.pow(y.v,2));
+                        vtheta = 2*rtheta - Math.PI - vtheta;
+                        x.v = .1 * v * Math.cos(vtheta);
+                        y.v = .1 * v * Math.sin(vtheta);
+                    }*/
+                    rx = correct(rx);
+                    ry = correct(ry);
+                    f = grav/(Math.pow(rx,2) + Math.pow(ry,2));
+                    //f = Math.min(f, 100);
+
+                    fx = f * Math.cos(rtheta);
+                    fy = f * Math.sin(rtheta);
+                    if(friction!=0){
+                        xfric = friction * Math.cos(vtheta);
+                        yfric = friction * Math.sin(vtheta);
+                        fx -= xfric;
+                        fy -= yfric;
+                    }
+                    doAxis(x, fx);
+                    doAxis(y, fy);
+                    //if(i%100===0){
+                    //    console.log((rtheta-vtheta)*180/Math.PI);
+                    //}
+
+                }
+
+
+                return {fall: fall, anim:anim};
+            }
+            var mouse = {}
+            function mouseMoveSetup(){
+                $("body").on("mousemove", function(e){
+                    mouse.x = e.pageX;
+                    mouse.y = e.pageY;
+                    
+                })
+            }
+            function setGrav(){
+                grav = $("#grav").val();
+                console.log(grav);
+            }
+            function setFriction(){
+                friction = $("#friction").val() * 0.0001;
+                console.log(friction);
+            }
+            function inputSetup(){
+                setGrav();
+                setFriction();
+                $("body").on("change","#grav", setGrav);
+                $("body").on("change","#friction", setFriction);
+                
+            }
+            var eAngle = 2 * Math.PI;
+            var canvasTop, canvasLeft, width, height;
+            reqAnimFrame = 
+                window.requestAnimationFrame       || 
+                window.mozRequestAnimationFrame    ||
+                window.webkitRequestAnimationFrame ||
+                window.msRequestAnimationFrame     ||
+                window.oRequestAnimationFrame;
+
+            function resize(){
+                var canvas  = $("#myCanvas");
+                width = $(window).width();
+                height = $(window).height();
+                canvas.width(width);
+                canvas.height(height);
+                canvas.prop({
+                    width: width,
+                    height: height
+                });
+                var offset = canvas.offset();
+                canvasTop = offset.top;
+                canvasLeft = offset.left;
+                
+            }
+            $(window).resize(resize);
+            $(function(){
+                mouseMoveSetup();
+                inputSetup();
+                resize();
+                var canvas  = document.getElementById("myCanvas");
+                var context = canvas.getContext("2d");
+                var ball = new Ball(context);
+                ball.anim();
+    
+            })
+            
+            
+        </script>
+    </head>
+    <body>
+        <canvas id="myCanvas" width="500" height="500"></canvas>    
+        <div id="controls">
+            <label for="grav">Strength of gravity</label><input type="number" value="40" id="grav">
+            <label for="friction">Strength of friction</label><input type="number" value="0" id="friction">
+        </div>
+    </body>
+</html>

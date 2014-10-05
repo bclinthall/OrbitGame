@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>ByEq</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="jquery-2.1.1.min.js"></script>
+        <script src="orbit_1.js"></script>
+        <style>
+            
+            #controls{
+                position: fixed;
+                top: 10px;
+                left: 10px;
+            }
+            #myCanvas{
+                width: 500;
+                height: 500;
+                border: 1px double black;
+            }
+        </style>
+        <script type="text/javascript">
+            var canvas; 
+            var context; 
+            function getVal(id){
+                return parseFloat($("#"+id).val());
+            }
+            function onStart(){
+                context.clearRect(0,0,500,500);
+                context.fillRect(249, 249, 3,3);
+                var v = new Float32Array([getVal("vx"), getVal("vy"), 0]);
+                var r = new Float32Array([getVal("rx"), getVal("ry"), 0]);
+                context.fillStyle = "#F00";
+                context.fillRect(r[0]+250, 250-r[1],3,3);
+                context.fillStyle = "#000";
+                
+                //try vx=1; vy=1; rx=0; ry=70; grav = 100;
+                var grav = getVal("grav");
+                var func = makeFunction(v, r, grav);
+                var pos;
+                for(var t=0; t<300; t++){
+                    pos = func.getPos(t);
+                    pos[0] = pos[0]+250;
+                    pos[1] = 250-pos[1];
+                    console.log(pos);
+                    context.fillRect(pos[0], pos[1], 1,1);
+                }
+            }
+            $(function(){
+                canvas = document.getElementById("myCanvas");
+                context = canvas.getContext("2d");
+            })
+        </script>
+    </head>
+    <body>
+        <div id="controls">vx:<input id="vx"> vy:<input id="vy"> rx:<input id="rx"> ry:<input id="ry"> grav:<input id="grav"></div>
+        <button id="start" onclick="onStart();">Start</button>
+        <canvas width="500" height="500" id="myCanvas"></canvas>
+    </body>
+</html>
