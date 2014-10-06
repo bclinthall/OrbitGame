@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Orbit Canvas 2</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="jquery-2.1.1.min.js"></script>
+        <style>
+            body{
+                position: absolute;
+                top:0;
+                left:0;
+                bottom: 0;
+                right: 0;
+                margin:0;
+            }
+            #controls{
+                position: fixed;
+                top: 10px;
+                left: 10px;
+            }
+            #myCanvas{
+                position: absolute;
+                top:0;
+                left:0;
+                bottom: 0;
+                right: 0;
+                margin:0;
+                cursor: crosshair;
+            }
+            input{
+                width: 50px;
+            }
+        </style>
+        <script type="text/javascript">
+            var canvas, context, canvasHeight, canvasWidth, grav, canvasOffset;
+            function getVal(id){
+                return parseFloat($("#"+id).val());
+            }
+            var reqAnimFrame = 
+                window.requestAnimationFrame       || 
+                window.mozRequestAnimationFrame    ||
+                window.webkitRequestAnimationFrame ||
+                window.msRequestAnimationFrame     ||
+                window.oRequestAnimationFrame;
+            function setGrav(){
+                grav = getVal("grav");
+            }
+            function resize(){
+                canvasWidth = $(window).width();
+                canvasHeight = $(window).height();
+                canvas.prop({
+                    width: canvasWidth,
+                    height: canvasHeight
+                });
+            }
+            $(function(){
+                canvas  = document.getElementById("myCanvas");
+                context = canvas.getContext("2d");
+                canvas = $(canvas);
+                canvasOffset = canvas.offset();
+                $("#grav").change(setGrav).keyup(setGrav);
+                setGrav();
+                $(window).resize(resize);
+                resize();
+                
+            })
+            
+        </script>
+        <script type="text/javascript">
+            var eAngle = Math.PI * 2;
+            function mouseMove(e, mouseMoved, sun, ball, radius){
+                mouseMoved[0] = 1;
+                mouseMoved[1] = e.pageX - canvasOffset.left;
+                mouseMoved[2] = canvasHeight - (e.pageY - canvasOffset.top);
+                getRadius(sun, ball, radius);
+                //console.log("ball:",ball[1],ball[2], "sun:",sun[1],sun[2], "radius:",radius);
+            }
+            function sq(a){
+                return Math.pow(a,2);
+            }
+            function length(a){
+                return Math.sqrt(sq(a[1])+sq(a[2]));
+            }
+            function speed(a){
+                return Math.sqrt(sq(a[4])+sq(a[5]));
+            }
+            function refreshMouse(sun, mouseMoved){
+                if(mouseMoved[0]===1){
+                    sun[1] = mouseMoved[1];
+                    sun[2] = mouseMoved[2];
+                    mouseMoved[0] = 0;
+                }
+            }function setPosTheta(ary){
+                ary[3] = Math.atan2(ary[2],ary[1]);
+            }
+            function getRadius(sun, ball, radius){
+                radius[1] = sun[1]-ball[1];
+                radius[2] = sun[2]-ball[2];
+                radius[0] = length(radius);
+                setPosTheta(radius);
+            }
+            
+            function Accelerator(){
+                var dtRemaining = 0;
+                var time = 0;
+                var dt;
+                var i = 0;
+                var accelMag;
+                var dvx;
+                var dvy;
+                var dx;
+                var dy;
+                function bounce(sun, ball, radius){
+                    if(radius[0]<= sun[0]+ball[0]){
+                        ball[7] = Math.atan2(ball[5],ball[4]);
+                        ball[4] = ball[6] * Math.cos(2*ball[7] + Math.PI - radius[3]);
+                        ball[5] = ball[6] * Math.sin(2*ball[7] + Math.PI + radius[3]);
+                        return true;
+                    }
+
+                    if(ball[1]<=ball[0] || ball[1]>=canvasWidth-ball[0]){
+                        ball[4]*=-1;
+                        return true;
+                    }
+                    if(ball[2]<=ball[0] || ball[2]>=canvasHeight-ball[0]){
+                        ball[5]*=-1;
+                        return true;
+                    }
+                }
+                function accelBall(sun, ball, radius){
+                    i = 0;
+                    
+                    while(time<1){
+                        i++
+                        ball[6] = speed(ball);
+                        getRadius(sun, ball, radius);
+                        if(radius[0]<1){
+                            radius[0]=1;
+                        }
+                        accelMag = grav/sq(radius[0])
+                        dt = dtRemaining>0 ? dtRemaining : ball[6] > 0 ? 1/ball[6]/grav : 1/grav;
+                        dt = dt > 1 ? 1 : dt;
+                        dtRemaining = 0;
+                        time+=dt;
+                        if(time>1){
+                            dtRemaining = time - 1;
+                            dt = 1-(time-dt);
+                        }
+                        dvx = Math.cos(radius[3])*accelMag*dt; //v = v + accel * dt;
+                        dvy = Math.sin(radius[3])*accelMag*dt;
+                        dx = ball[4]*dt; //pos = pos + v * dt;
+                        dy = ball[5]*dt;
+                        
+                        
+                        if(bounce(sun, ball, radius)){
+                            ball[1] += ball[4]*dt; //pos = pos + v * dt;
+                            ball[2] += ball[5]*dt;
+                        };
+                    }
+                    console.log(i);
+
+                }
+                return ({accelBall: accelBall});
+            }
+
+            var path = [];
+            function drawBall(ball, radius){
+                context.fillStyle = '#8ED6FF';
+                context.beginPath();
+                context.arc(ball[1], canvasHeight - ball[2], ball[0], 0, eAngle);
+                path.push([ball[1], canvasHeight - ball[2]]);
+                context.fill();
+                
+//                context.beginPath();  //draw velocity
+//                context.moveTo(ball[1],canvasHeight-ball[2]);
+//                context.lineTo((ball[1]+ball[4]*100),canvasHeight - ((ball[2]+ball[5]*100)))
+//                context.stroke();
+                
+//                context.beginPath(); //draw radius
+//                context.moveTo(ball[1],canvasHeight-ball[2]);
+//                context.lineTo((ball[1]+radius[1]),canvasHeight - ((ball[2]+radius[2])))
+//                context.stroke();
+
+//                var pathLength = path.length;  //draw path history
+//                var start = Math.max(pathLength - 500, 0);
+//                context.beginPath();
+//                context.moveTo(path[start][0],path[start][1])
+//                for(var i=start; i<pathLength; i++ ){
+//                    context.lineTo(path[i][0],path[i][1]);
+//                }
+//                context.stroke();
+            }
+            function drawSun(sun){
+                context.fillStyle = '#AAAA00';
+                context.beginPath();
+                context.arc(sun[1], canvasHeight - sun[2], sun[0], 0, eAngle);
+                context.fill();
+                
+            }
+            function anim(sun, ball, radius, mouseMoved){
+                context.clearRect(0,0,canvasWidth, canvasHeight);
+                refreshMouse(sun, mouseMoved);
+                accelBall(sun, ball, radius);
+                drawBall(ball, radius);
+                drawSun(sun);
+                reqAnimFrame(function(){
+                    anim(sun, ball, radius, mouseMoved)
+                });
+            }
+            
+            function resize(){
+                canvasWidth = $(window).width();
+                canvasHeight = $(window).height();
+                canvas.prop({
+                    width: canvasWidth,
+                    height: canvasHeight
+                });
+            }
+            $(window).resize(resize);
+            $(function(){
+                //0     1, 2, 3,  4
+                //size, x, y, theta, vx, vy, v, vtheta
+                var sun = new Float32Array([20,200,200, Math.PI/4,0,0,0,0]);
+                var ball = new Float32Array([20,100,100, Math.PI/4,0,0,0,0]);
+                //length, x, y
+                var mouseMoved = new Float32Array([0,0,0]);
+                //null, x, y, theta, dv/dt
+                var radius = new Float32Array([0, 100, 100, Math.PI/4, 0]);
+                $("#myCanvas").mousemove(function(e){
+                    mouseMove(e, mouseMoved, sun, ball, radius);
+                });
+                anim(sun, ball, radius, mouseMoved);
+    
+            })
+        </script>
+    
+            
+    </head>
+    <body>
+        <canvas id="myCanvas" width="500" height="500"></canvas>    
+        <div id="controls">
+            <label for="grav">Strength of gravity</label><input type="number" value="100" id="grav">
+            <label for="friction">Strength of friction</label><input type="number" value="0" id="friction">
+        </div>
+    </body>
+</html>

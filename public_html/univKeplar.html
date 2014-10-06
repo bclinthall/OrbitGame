@@ -118,7 +118,7 @@ and open the template in the editor.
                 ball.rmag = Math.sqrt(Math.pow(ball.rx-mouse.rx,2) + Math.pow(ball.ry-mouse.ry,2));
                 if(ball.rmag < ball.size + mouse.size){
                     bounce = true;
-                    /*ball.vmag = get_mag(ball, "v");
+                    ball.vmag = get_mag(ball, "v");
                     ball.rtheta = get_rtheta(ball);
                     ball.rdelta = ball.size + mouse.size - ball.rmag;
                     ball.rx+= ball.rdelta * Math.cos(ball.rtheta) * (ball.rx-mouse.rx)/Math.abs(ball.rx-mouse.rx);
@@ -127,7 +127,7 @@ and open the template in the editor.
                     ball.vtheta = get_vtheta(ball);
                     ball.vtheta = 3*ball.vtheta + Math.PI - ball.rtheta;
                     ball.vx = ball.vmag * Math.cos(ball.vtheta);
-                    ball.vy = ball.vmag * Math.sin(ball.vtheta);*/
+                    ball.vy = ball.vmag * Math.sin(ball.vtheta);
                     
                 }
                 return bounce;
