@@ -36,6 +36,11 @@ and open the template in the editor.
             input{
                 width: 50px;
             }
+            i{
+                font-style: normal;
+                display: inline-block;
+                width: 125px;
+            }
         </style>
         <script type="text/javascript">
             var canvas, context, canvasHeight, canvasWidth, grav, canvasOffset;
@@ -69,21 +74,37 @@ and open the template in the editor.
                 $(window).resize(resize);
                 resize();
                 
-            })
+            });
             
         </script>
         <script type="text/javascript">
             var eAngle = Math.PI * 2;
             var accelerator = new Accelerator();
             var mouseMoving = false;
+            function get_e(ball, radius){
+                var r = radius[0];
+                var h = radius[1] * ball[5] - radius[2]*ball[4];
+                var e = xyLength ( (ball[5]*h/grav) - (radius[1]/r), (-1*ball[4]*h/grav) - (radius[2]/r),0,0 );
+                return Math.round(e * 100)/100;
+            }
             function sq(a){
                 return Math.pow(a,2);
             }
             function length(a){
                 return Math.sqrt(sq(a[1])+sq(a[2]));
             }
+            function xyLength(x1, y1, x2, y2){
+                return Math.sqrt(sq(x2-x1)+sq(y2-y1));
+            }
             function speed(a){
                 return Math.sqrt(sq(a[4])+sq(a[5]));
+            }
+            function startOrbit(radius){
+                radius[5] = radius[3];
+            }
+            function getOrbit(radius){
+                var orbit = Math.round((radius[5] - radius[3]) * 360/Math.PI/2);
+                return orbit < 0 ? orbit + 360 : orbit;
             }
             function mouseMove(e, mouseMoved, sun, ball, radius){
                 if(mouseMoving){
@@ -91,6 +112,7 @@ and open the template in the editor.
                     mouseMoved[1] = e.pageX - canvasOffset.left;
                     mouseMoved[2] = canvasHeight - (e.pageY - canvasOffset.top);
                     getRadius(sun, ball, radius);
+                    startOrbit(radius);
                 }
                 //console.log("ball:",ball[1],ball[2], "sun:",sun[1],sun[2], "radius:",radius);
             }
@@ -99,8 +121,8 @@ and open the template in the editor.
             }
             function mouseDown(e, sun){
                 var x = e.pageX - canvasOffset.left;
-                var y = canvasHeight - (e.pageY - canvasOffset.top)
-                if( Math.sqrt( sq(x-sun[1])) + sq(y-sun[2]) < sun[0]){
+                var y = canvasHeight - (e.pageY - canvasOffset.top);
+                if( Math.sqrt( sq(x-sun[1])) + sq(y-sun[2]) < 4*sun[0]){
                     mouseMoving = true;
                 }
             }
@@ -141,13 +163,14 @@ and open the template in the editor.
                 var dvy;
                 var dx;
                 var dy;
+                var explode = false;
                 function bounce(sun, ball, radius){
-                    if(radius[0]<= sun[0]+ball[0]){
+                    /*if(radius[0]<= sun[0]+ball[0]){
                         ball[7] = Math.atan2(ball[5],ball[4]);
                         ball[4] = ball[6] * Math.cos(2*ball[7] + Math.PI - radius[3]);
                         ball[5] = ball[6] * Math.sin(2*ball[7] + Math.PI + radius[3]);
                         return true;
-                    }
+                    }*/
 
                     if(ball[1]<=ball[0] || ball[1]>=canvasWidth-ball[0]){
                         ball[4]*=-1;
@@ -159,17 +182,22 @@ and open the template in the editor.
                     }
                 }
                 function accelBall(sun, ball, radius){
+                    if(explode){
+                        context.fillStyle="#FF0000";
+                        context.fillRect(0,0,canvasWidth,canvasHeight);
+                        return false;
+                    }
                     i = 0;
                     time = 0;
                     while(time<1){
-                        i++
+                        i++;
                         ball[6] = speed(ball);
                         getRadius(sun, ball, radius);
                         if(radius[0]<1){
                             radius[0]=1;
                         }
-                        accelMag = grav/sq(radius[0])
-                        dt = dtRemaining>0 ? dtRemaining : ball[6] > 0 ? 1/ball[6]/grav : 1/grav;
+                        accelMag = grav/sq(radius[0]);
+                        dt = dtRemaining>0 ? dtRemaining : ball[6] > 0 ? 100/ball[6]/grav : 100   /grav;
                         dt = dt > 1 ? 1 : dt;
                         dtRemaining = 0;
                         time+=dt;
@@ -182,10 +210,10 @@ and open the template in the editor.
                         dx = ball[4]*dt; //pos = pos + v * dt;
                         dy = ball[5]*dt;
                         
-                        ball[4]+=dvx;
-                        ball[5]+=dvy;
                         ball[1]+=dx;
                         ball[2]+=dy;
+                        ball[4]+=dvx;
+                        ball[5]+=dvy;
                         getRadius(sun, ball, radius);
                         //If you've crossed into a wall or the sun, reflect v and then add v to pos.
                         //Then accelerate.  Then shift position again
@@ -202,13 +230,13 @@ and open the template in the editor.
                                 ball[5] = ball[6] * Math.sin(newVtheta);
                                 ball[1] += ball[4]*dt; //pos = pos + v * dt;
                                 ball[2] += ball[5]*dt;
-                                return;
+                                return true;
                             }else if(sunMode === "stick"){
                                 ball[1] -=dx;
                                 ball[2] -=dy;
                                 ball[4] = 0;
                                 ball[5] = 0;
-                                return;
+                                return true;
                             }else if(sunMode === "paddle"){
                                 var tangentTheta = radius[3]-Math.PI/2;
                                 ball[7] = Math.atan2(ball[5],ball[4]);
@@ -219,7 +247,24 @@ and open the template in the editor.
                                 ball[5] += sun[5];
                                 ball[1] += ball[4]*dt + 2*sun[0]; //pos = pos + v * dt;
                                 ball[2] += ball[5]*dt + 2*sun[0];
-                                return;
+                                return true;
+                            }else if(sunMode === "explode"){
+                                explode = true;
+                                setTimeout(function(){
+                                    //10,200,200, Math.PI/4,0,0,0,0
+                                    ball[1] = 100;
+                                    ball[2] = 100;
+                                    ball[4] = 0;
+                                    ball[5] = 0;
+                                    sun[1] = 200;
+                                    sun[2] = 200;
+                                    sun[4] = 0;
+                                    sun[5] = 0;
+                                    explode = false;
+                                }, 1000);
+                                return false;
+                            }else if(sunMode === "none"){
+                                
                             }
                         }else if(ball[1]<=ball[0] || ball[1]>=canvasWidth-ball[0]){
                             ball[4]*=-1;
@@ -231,12 +276,11 @@ and open the template in the editor.
                             ball[1] += ball[4]*dt; //pos = pos + v * dt;
                             ball[2] += ball[5]*dt;
                         }
-                        if(bounce(sun, ball, radius)){
-                            ball[1] += ball[4]*dt; //pos = pos + v * dt;
-                            ball[2] += ball[5]*dt;
-                        };
+                        
+                        
                     }
                     console.log(i);
+                    return true;
 
                 }
                 return ({accelBall: accelBall});
@@ -249,8 +293,15 @@ and open the template in the editor.
                 context.arc(ball[1], canvasHeight - ball[2], ball[0], 0, eAngle);
                 path.push([ball[1], canvasHeight - ball[2]]);
                 context.fill();
-                $("#speed").text(Math.round(ball[6]*10)/10);
-                  context.beginPath();  //draw velocity
+                var e = get_e(ball, radius);
+                if(e<1){
+                    e = "<i>speed: " + Math.round(ball[6]*10)/10 + ";</i><i>e: " + e + ";</i><i>orbit degrees: " + getOrbit(radius) + "</i>";
+                }else{
+                    e = "<i>speed: " + Math.round(ball[6]*10)/10 + ";</i><i>e: " + e + ";</i>";
+                }
+                $("#readings").html(e);
+                
+//                  context.beginPath();  //draw velocity
 //                context.moveTo(ball[1],canvasHeight-ball[2]);
 //                context.lineTo((ball[1]+ball[4]*100),canvasHeight - ((ball[2]+ball[5]*100)))
 //                context.stroke();
@@ -260,14 +311,15 @@ and open the template in the editor.
 //                context.lineTo((ball[1]+radius[1]),canvasHeight - ((ball[2]+radius[2])))
 //                context.stroke();
 
-//                var pathLength = path.length;  //draw path history
-//                var start = Math.max(pathLength - 500, 0);
-//                context.beginPath();
-//                context.moveTo(path[start][0],path[start][1])
-//                for(var i=start; i<pathLength; i++ ){
-//                    context.lineTo(path[i][0],path[i][1]);
-//                }
-//                context.stroke();
+                var pathLength = path.length;  //draw path history
+                var start = Math.max(pathLength - 500, 0);
+                //context.strokeStyle = "#000000";
+                context.beginPath();
+                context.moveTo(path[start][0],path[start][1])
+                for(var i=start; i<pathLength; i++ ){
+                    context.lineTo(path[i][0],path[i][1]);
+                }
+                context.stroke();
             }
             function drawSun(sun, radius){
                 context.fillStyle = '#CCCC00';
@@ -287,16 +339,31 @@ and open the template in the editor.
                 context.moveTo(tangentLine.x1, canvasHeight-tangentLine.y1);
                 context.lineTo(tangentLine.x2, canvasHeight-tangentLine.y2);
                 context.stroke();*/
-                
+                /*context.beginPath();
+                context.moveTo(sun[1],canvasHeight-sun[2]);
+                context.lineTo(sun[1]+10*sun[4], canvasHeight-(sun[2]+10*sun[5]));
+                context.stroke();*/
+            }
+            function drawBorder(){
+                context.strokeStyle = "#FF0000";
+                context.beginPath();
+                context.moveTo(0,0);
+                context.lineTo(canvasWidth, 0);
+                context.lineTo(canvasWidth, canvasHeight);
+                context.lineTo(0, canvasHeight);
+                context.lineTo(0, 0);
+                context.stroke();
             }
             function anim(sun, ball, radius, mouseMoved){
                 context.clearRect(0,0,canvasWidth, canvasHeight);
                 refreshMouse(sun, ball, mouseMoved);
-                accelerator.accelBall(sun, ball, radius);
-                drawBall(ball, radius);
-                drawSun(sun, radius);
+                if(accelerator.accelBall(sun, ball, radius)){
+                    drawSun(sun, radius);
+                    drawBall(ball, radius);
+                    //drawBorder();
+                };
                 reqAnimFrame(function(){
-                    anim(sun, ball, radius, mouseMoved)
+                    anim(sun, ball, radius, mouseMoved);
                 });
             }
             
@@ -310,23 +377,23 @@ and open the template in the editor.
             }
             $(window).resize(resize);
             $(function(){
-                //0     1, 2, 3,  4
-                //size, x, y, theta, vx, vy, v, vtheta
+                //0          1, 2, 3,     4,  5,  6, 7
+                //magnitude, x, y, theta, vx, vy, v, vtheta
                 var sun = new Float32Array([5,200,200, Math.PI/4,0,0,0,0]);
-                var ball = new Float32Array([10,100,100, Math.PI/4,0,0,0,0]);
+                var ball = new Float32Array([20,100,100, Math.PI/4,0,0,0,0]);
                 //length, x, y
                 var mouseMoved = new Float32Array([0,0,0]);
-                //null, x, y, theta, dv/dt
-                var radius = new Float32Array([0, 100, 100, Math.PI/4, 0]);
-                $("#myCanvas").mousemove(function(e){
+                //magnitude, x, y, theta, dv/dt, init orbit theta
+                var radius = new Float32Array([0, 100, 100, Math.PI/4, 0, 0]);
+                $("#myCanvas").on("mousemove touchmove", function(e){
                     mouseMove(e, mouseMoved, sun, ball, radius);
-                }).mouseup(mouseUp).mouseleave(mouseUp).mousedown(function(e){
+                }).on("mouseup touchend", mouseUp).mouseleave(mouseUp).on("mousedown touchend", function(e){
                     mouseDown(e, sun);
-                })
+                });
                 
                 anim(sun, ball, radius, mouseMoved);
     
-            })
+            });
         </script>
     
             
@@ -334,10 +401,11 @@ and open the template in the editor.
     <body>
         <canvas id="myCanvas" width="500" height="500"></canvas>    
         <div id="controls">
-            <div>Drag the little yellow ball around.  It is your sun.  Try to get the blue ball (your planet) to orbit. The attraction between them quite accurately mimics gravity.</div>
-            <label for="grav">Strength of gravity</label><input type="number" value="100" id="grav">
+            <div>Drag the yellow ball around.  It is your sun.  Try to get the blue ball (your planet) to orbit. The attraction between them quite accurately simulates gravity.</div>
+            <label for="grav">Strength of gravity</label><input type="number" value="400" id="grav">
             <!--<label for="friction">Strength of friction</label><input type="number" value="0" id="friction">-->
-             Collision Effect <select id="collision"><option selected>stick</option><option>bounce</option></select> Speed <span id="speed"></span>
+            Collision Effect <select id="collision"><option selected>stick</option><option>bounce</option><option>explode</option><option>none</option></select> 
+            <span id="readings"></span>
         </div>
     </body>
 </html>

@@ -31,7 +31,7 @@ function sq(x){
     return Math.pow(x,2);
 }
 function Vect(x,y){
-    var a = new Float32Array(2);
+    var a = new Float32Array(3);
     
     var _this = this;
     _this.a = a;
@@ -50,9 +50,10 @@ function Vect(x,y){
     }
     _this.cross = function(b, out){
         var ret = getRet(out);out = get_out(out);
-        out[0] = a[1]*b[2] - b[2]*a[1];
-        out[1] = a[0]*b[2] - a[0]*b[2];
-        out[2] = a[0]*b[1] - b[1]*a[0];
+        b = b.a ? b.a : b;
+        out[0] = a[1]*b[2] - a[2]*b[1];
+        out[1] = a[0]*b[2] - a[2]*b[0];
+        out[2] = a[0]*b[1] - a[1]*b[0];
         return ret;
     }
     _this.mult = function(scalar, out){
@@ -97,18 +98,35 @@ function Vect(x,y){
 function OrbitalCalculator(){
     var R0 = new Vect();
     var V0 = new Vect();
-    var Dummy0 = new Vect();
-    var Dummy1 = new Vect();
-    var Dummy2 = new Vect();
     var E = new Vect();
     var stumpff = new Stumpff();
-    var r0, v0, vr0, alpha, chiPrev, grav, gravSqrt, e, h;
+    var r0, v0, vr0, alpha, chiPrev, grav, gravSqrt, e, h, nu, rotate, shift;
+    var Cross = new Vect();
+    var clockwise;
     function get_e(R, V, grav){
         var r = R.length();
         h = R.x() * V.y() - R.y()*V.x();
         E.set( (V.y()*h/grav) - (R.x()/r), (-1*V.x()*h/grav) - (R.y()/r) );
-        return Math.round(E.length() * 100)/100;
-
+        nu = Math.acos(E.dot(R) / (E.length()*R.length()));
+        R.cross(V, Cross);
+        clockwise = Cross.z()<0;
+        //$("#alpha").text("z of R cross V: " + Cross.z())
+        
+        if(R.dot(V)<0){
+            nu = Math.PI * 2 - nu;
+        }
+        rotate = Math.atan2(R.y(),R.x());
+        if(clockwise){
+            shift = rotate+nu;
+        }else{
+            shift = rotate-nu;
+        }
+        //nu = rotate - nu;
+        return E.length();
+    }
+    var orbit = {
+        h: null,
+        e: null,
     }
     function setInitialConds(rx, ry, vx, vy, myGrav){
         grav = myGrav;
@@ -121,8 +139,15 @@ function OrbitalCalculator(){
         vr0 = R0.dot(V0); 
         vr0/=r0;
         alpha = (2/r0) - sq(v0)/grav;
-        $("#alpha").text(Math.round(2/alpha) + " e: "+e);
+        //$("#alpha").text(Math.round(2/alpha) + " e: "+e);
         chiPrev = findChi(0);
+        orbit.h = h;
+        orbit.e = e;
+        orbit.a = 2/alpha;
+        orbit.nu = nu;
+        orbit.rotate = rotate;
+        orbit.shift = shift;
+        return orbit;
     }
     
     var z, S_res, C_res, goober, univ, univPrime;
@@ -140,7 +165,7 @@ function OrbitalCalculator(){
     var callCounter = 0;
     function findChi(dt){
         if(callCounter ===100){
-            console.log("avg iterations:", iterationCounter/100)
+            //console.log("avg iterations:", iterationCounter/100)
             iterationCounter = 0;
             callCounter = 0;
         }
@@ -190,8 +215,7 @@ function OrbitalCalculator(){
         fR0 = R0.mult(fPrime,fR0);
         gV0 = V0.mult(gPrime,gV0);
         V = fR0.vectorAdd(gV0, V);
-        var e = get_e(R,V,grav)
-        return {rx:R.x(), ry:R.y(), vx: V.x(), vy: V.y(), e:e} 
+        return {rx:R.x(), ry:R.y(), vx: V.x(), vy: V.y()} 
     }
     function findChiTest(){
         r0 = 10000;
