@@ -44,6 +44,9 @@ function OrbitRender() {
         var canvasOffset = $(canvas).offset();
         var canvasWidth;
         var canvasHeight;
+        var onScroll = function(){
+            canvasOffset = $(canvas).offset();
+        }
         var resize = function() {
             canvasWidth = canvas.width();
             canvasHeight = canvas.height();
@@ -52,9 +55,19 @@ function OrbitRender() {
                 height: canvasHeight
             });
         };
+        onScroll();
         resize();
+        if(window.resizeTo){
+            $("#resizeBtn").show();
+            $("#resizeBtn").click(function(){
+                window.resizeTo(660, 1220);
+            })
+        }else{
+            $("#resizeBtn").hide();
+        }
+        
         $(window).resize(resize);
-
+        $(".canvasScrollParent").scroll(onScroll);
 
         var clear = function() {
             context.clearRect(0, 0, canvasWidth, canvasHeight);
