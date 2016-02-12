@@ -1,17 +1,24 @@
+function distance(x1, y1, x2, y2){
+    return (Math.sqrt(sq(x2-x1)+sq(y2-y1)));
+}
 function OrbitRender() {
     var sun = {
         r: new Vect(200, 200),
         v: new Vect(0,0),
-        size: 20
+        size: 15,
+        moving: false,
+        color: "#DDA"
     };
     var planet = {
         r: new Vect(100, 100),
         v: new Vect(0, 0),
-        size: 20
+        size: 15,
+        color: "blue"
     };
     var grav = 5;
     var showOrbit = false;
-    var pause = true;
+    var pause = false;
+    var pauseStartTime = 0;
     var reqAnimFrame =
             window.requestAnimationFrame ||
             window.mozRequestAnimationFrame ||
@@ -38,8 +45,8 @@ function OrbitRender() {
         var canvasWidth;
         var canvasHeight;
         var resize = function() {
-            canvasWidth = $(window).width();
-            canvasHeight = $(window).height();
+            canvasWidth = canvas.width();
+            canvasHeight = canvas.height();
             canvas.prop({
                 width: canvasWidth,
                 height: canvasHeight
@@ -53,15 +60,36 @@ function OrbitRender() {
             context.clearRect(0, 0, canvasWidth, canvasHeight);
         };
         var eAngle = 2 * Math.PI;
-        var drawBody = function(body, color) {
-            context.fillStyle = color;
+        var drawBody = function(body) {
+            context.fillStyle = body.color;
+            context.strokeStyle = body.color;
             context.beginPath();
-            context.arc(body.r.x(), canvasHeight - body.r.y(), body.size, 0, eAngle);
-            context.fill();
+            if(!body.moving){
+                context.arc(body.r.x(), canvasHeight - body.r.y(), body.size +1, 0, eAngle);
+                context.fill();
+            }else{
+                context.arc(body.r.x(), canvasHeight - body.r.y(), body.size, 0, eAngle);
+                context.fill();
+                context.strokeStyle = "#000";
+                context.stroke();
+//                context.strokeStyle = "#000";
+//                context.beginPath();
+//                context.arc(body.r.x(), canvasHeight - body.r.y(), body.size*.67, 0, eAngle);
+//                context.stroke();
+            }
+            
+            
         };
+        var drawArc = function(cx, cy, radius, startAngle, endAngle, ccw, color){
+            context.beginPath();
+            context.strokeStyle = color
+            context.arc(cx, canvasHeight - cy, radius, startAngle, endAngle, ccw);
+            context.stroke();
+        }
         function OrbitRender() {
-            var h, e, a, grav, r, x, y, angle, nu, rotate, shift;
+            var h, e, a, grav, r, x, y, period, angle, nu, rotate, shift, _initialized;
             function set(orbit, _grav) {
+                
                 h = orbit.h;
                 e = orbit.e;
                 a = orbit.a;
@@ -69,14 +97,23 @@ function OrbitRender() {
                 rotate = orbit.rotate
                 shift = orbit.shift;
                 grav = _grav;
+                if(h!==0){
+                    _initialized = true;
+                }
                 var rMinusN = rotate - nu;
                 rMinusN = rMinusN * 180 / Math.PI;
                 if (rMinusN < 0)
                     rMinusN += 360;
                 rMinusN = rMinusN.toPrecision(3);
-                $("#alpha").text(
-                        "nu:" + (nu * 180 / Math.PI).toPrecision(3) +
-                        "; rotate-nu: " + rMinusN);
+                $("#stats").html(
+                        "<span class='stat'>"+ h.toPrecision(3) +"</span>h (orbital energy)" + 
+                        "<br> <span class='stat'>" + e.toPrecision(3) + "</span>e (orbital eccentricity)" +
+                        "<br> <span class='stat'>" + a.toPrecision(3) + "</span>a (major radius)" +
+                        "<br> <span class='stat'>" + (orbit.period/1000).toPrecision(3) + "</span>T (period)"
+                );
+            }
+            function initialized(){
+                return _initialized;
             }
             function get_r(theta) {
                 return sq(h) / (grav * (1 + e * Math.cos(theta)));
@@ -89,38 +126,67 @@ function OrbitRender() {
                 var i0 = Math.round(nu * 180 / Math.PI);
                 var iF = i0 + 179;
                 //for(var i=i0; i<iF; i++){
-                for (var i = 0; i < 360; i++) {
-                    angle = i * Math.PI / 180;
-                    r = get_r(angle);
-                    x = r * Math.cos(angle + shift) + sun.r.x();
-                    y = canvasHeight - (r * Math.sin(angle + shift) + sun.r.y());
-                    if (i == 0) {
-                        context.beginPath();
-                        context.moveTo(x, y);
-                    } else {
-                        context.lineTo(x, y);
+                if(!pause){
+                    for (var i = 0; i < 360; i++) {
+                        angle = i * Math.PI / 180;
+                        r = get_r(angle);
+                        x = r * Math.cos(angle + shift) + sun.r.x();
+                        y = canvasHeight - (r * Math.sin(angle + shift) + sun.r.y());
+                        if (i == 0) {
+                            context.beginPath();
+                            context.moveTo(x, y);
+                        } else {
+                            context.lineTo(x, y);
+                        }
                     }
+                    context.stroke();
+                } else {
+                    var startAngle = Math.atan2(planet.r.y()-sun.r.y(), planet.r.x()-sun.r.x()) - shift;
+                    var sincePause = Date.now()-pauseStartTime;
+                    sincePause = sincePause / 3000;
+                    
+                    angle = Math.PI * 2 * sincePause;
+                    
+                    if(h>0){
+                        angle += startAngle;
+                        for (var i = startAngle; i < angle; i+=.01) {
+                            r = get_r(i);
+                            x = r * Math.cos(i + shift) + sun.r.x();
+                            y = canvasHeight - (r * Math.sin(i + shift) + sun.r.y());
+                            if (i == startAngle) {
+                                context.beginPath();
+                                context.moveTo(x, y);
+                            } else {
+                                context.lineTo(x, y);
+                            }
+                        }
+                        context.stroke();
+                    
+                    }else{
+                        angle*=-1;
+                        angle += startAngle;
+                        r = get_r(angle);
+                        for (var i = startAngle; i > angle; i-=.01) {
+                            r = get_r(i);
+                            x = r * Math.cos(i + shift) + sun.r.x();
+                            y = canvasHeight - (r * Math.sin(i + shift) + sun.r.y());
+                            if (i == startAngle) {
+                                context.beginPath();
+                                context.moveTo(x, y);
+                            } else {
+                                context.lineTo(x, y);
+                            }
+                        }
+                        context.stroke();
+                    }
+                    
+                    
+                    
+
                 }
-                context.stroke();
-                /*
-                 context.strokeStyle = "red";
-                 shift = rotate+nu;
-                 for(var i=0; i<360; i++){
-                 
-                 angle = i * Math.PI/180;
-                 r = get_r(angle);
-                 x = r * Math.cos(angle+shift) + sun.r.x();
-                 y = canvasHeight  - (r * Math.sin(angle+shift) + sun.r.y());
-                 if(i==0){
-                 context.beginPath();
-                 context.moveTo(x,y);
-                 }else{
-                 context.lineTo(x,y);
-                 }
-                 }
-                 context.stroke();*/
+                
             }
-            return {drawOrbit: drawOrbit, set: set};
+            return {drawOrbit: drawOrbit, set: set, initialized: initialized};
         }
         var drawLine = function(x1, y1, x2, y2, color) {
             context.beginPath();
@@ -132,16 +198,12 @@ function OrbitRender() {
             context.lineWidth = 1;
         }
         var orbitRender = new OrbitRender();
-        var eventCanvasCoords = function(e, radius) {
-            if (radius) {
-                radius.x = e.pageX - canvasOffset.left;
-                radius.y = canvasHeight - (e.pageY - canvasOffset.top);
-                return radius;
+        var eventCanvasCoords = function(e, vect) {
+            if (vect) {
+                vect.set(e.pageX - canvasOffset.left, canvasHeight - (e.pageY - canvasOffset.top));
+                return vect;
             } else {
-                return {
-                    x: e.pageX - canvasOffset.left,
-                    y: canvasHeight - (e.pageY - canvasOffset.top)
-                };
+                return new Vect(e.pageX - canvasOffset.left, canvasHeight - (e.pageY - canvasOffset.top));
             }
         };
         return {
@@ -149,10 +211,11 @@ function OrbitRender() {
             drawBody: drawBody,
             eventCanvasCoords: eventCanvasCoords,
             canvas: canvas,
-            canvasWidth: canvasWidth,
-            canvasHeight: canvasHeight,
+            canvasWidth: function() {return canvasWidth},
+            canvasHeight: function() {return canvasHeight},
             orbitRender: orbitRender,
             drawLine: drawLine,
+            drawArc: drawArc
         };
     };
     var canvasController = new CanvasController();
@@ -173,6 +236,9 @@ function OrbitRender() {
         $("#showPath").on("click", getShowOrbit);
         var togglePause = function() {
             pause = !pause;
+            if(pause){
+                pauseStartTime = Date.now();
+            }
         }
         $("#pause").click(togglePause);
         $(window).on("keydown", function(e){
@@ -182,52 +248,130 @@ function OrbitRender() {
         })
     }
     controlsSetup();
-
+    var Task = function(){
+        var eventsToComplete = [];
+        var eventsThatResetAll;
+        var eventListener;
+        var frameCheck;
+        var nextGoal = 0;
+        function writeChecklist(){
+            $("#goals").empty();
+            for(var i=0; i<eventsToComplete.length; i++){
+                $("<div>").addClass("goal").text(eventsToComplete[i].name).appendTo("#goals");
+            }
+        }
+        function goalComplete(){
+            $("#goals .goal").eq(nextGoal).addClass("complete");
+            nextGoal++;
+        }
+        function resetGoal(){
+            $("#goals .goal").eq(nextGoal-1).removeClass("complete");
+            nextGoal--;
+        }
+        function resetAll(){
+            $("#goals .goal").removeClass("complete");
+            nextGoal = 0;
+        }
+        function eventHappened(event){
+            if(nextGoal > 0 && eventsToComplete[nextGoal-1].reset(event)){
+                resetGoal();
+                return;
+            }
+            if(eventsThatResetAll(event)){
+                resetAll();
+            }
+            if(eventsToComplete[nextGoal].complete("event",event)){
+                goalComplete();
+                return;
+            }
+            eventListener(event, eventsToComplete, eventsThatResetAll, nextGoal);
+        }
+        
+        function checkFrame(planet, sun, orbit, eventsToComplete, eventsThatResetAll, nextGoal){
+            frameCheck(planet, sun, orbit, eventsToComplete, eventsThatResetAll, nextGoal);
+        }
+        function setup(eventsToComplete, ecent){
+            frameCheck = _frameCheck;
+        }
+        
+        function init(){
+            resetAll();
+            writeChecklist();
+            listenerSetup();
+        }
+        
+    }
+    var ScoreKeeper = function(){
+        var orbiting = false;
+        var orbitStartAngle = 0;
+        var orbitStartTime = 0;
+        var orbitCurrentAngle = 0;
+        var orbitCompleted = false;
+        var x, y;
+        function refresh(){
+            x = planet.r.x() - sun.r.x();
+            y = planet.r.y() - sun.r.y();
+        }
+        function restartOrbit(){
+            orbiting = false;
+            if(orbitalCalculator.orbit.e < 1){
+                refresh();
+                orbitStartAngle = Math.PI*2 - Math.atan2(y,x);
+                sun.color = "#ED4";
+                orbiting = true;
+                orbitCompleted = false;
+            }
+        }
+        function frameReady(){
+            if(orbiting){
+                refresh();
+                orbitCurrentAngle = Math.PI*2 - Math.atan2(y,x)
+                if(!orbitCompleted){
+                    canvasController.drawArc(sun.r.x(), sun.r.y(), sun.size*.9, orbitStartAngle, orbitCurrentAngle, orbitalCalculator.orbit.h > 0, "brown" );
+                }
+                //orbitCurrentAngle = orbitCurrentAngle < orbitStartAngle ? orbitCurrentAngle : orbitCurrentAngle + Math.PI * 2;
+                //if(orbitalCalculator.timestamp - orbitalCalculator.timeInit > orbitalCalculator){}
+                    
+                if(!orbitCompleted && orbitalCalculator.timestamp - orbitalCalculator.timeInit > orbitalCalculator.orbit.period){
+                    orbitCompleted = true;
+                    sun.color = "yellow";
+                }
+            }
+        }
+        function sunBounce(){
+            restartOrbit();
+        }
+        function recalibrate(){
+            restartOrbit();
+        }
+        return {recalibrate: recalibrate, frameReady: frameReady};
+    }
+    var scoreKeeper = new ScoreKeeper();
     var SunController = function(sun, canvasController, orbitalCalculator) {
-        var mouse = {
-            x: 200,
-            y: 200,
-            size: 20,
-            moving: false,
-            moved: false,
-            time: 0,
-            prevTime: 0,
-        };
+        var mouse = new Vect(200,200)
         function mouseUp() {
-            mouse.moving = false;
             sun.v.set(0,0);
         }
         function mouseDown(e) {
             var eventCanvasCoords = canvasController.eventCanvasCoords(e);
-            if (Math.sqrt(sq(eventCanvasCoords.x - mouse.x) + sq(eventCanvasCoords.y - mouse.y)) < mouse.size) {
-                mouse.moving = true;
-                console.log("mouse moving = true");
-                mouse.prevTime = Date.now();
+            if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
+                sun.moving = !sun.moving;
             }
         }
         var radius;
         
         function mouseMove(e) {
-            if (mouse.moving) {
-                mouse.moved = true;
-                mouse.time = Date.now();
+            if (sun.moving) {
                 canvasController.eventCanvasCoords(e, mouse);
-                sun.v.set((mouse.x - sun.r.x())/(mouse.time-mouse.prevTime), (mouse.y - sun.r.y())/(mouse.time-mouse.prevTime))
-//                sunMoveTimes.push(Date.now());
-//                if(sunMoveTimes.length>10) {
-//                    sunMoveTimes.shift();
-//                    console.log(sunMoveTimes[9]-sunMoveTimes[0]);
-//                }
-                console.log("sunspeed: "+sun.v.length().toPrecision(3), "sample in ms: " + (mouse.time-mouse.prevTime));
-                mouse.prevTime = mouse.time;
             }
         }
-        var sunMoved;
-        function moveSun() {
-            sunMoved = mouse.moved;
-            sun.r.set(mouse.x, mouse.y);
-            mouse.moved = false;
-            return sunMoved;
+        function moveSun(time, prevTime) {
+            sun.moved = false;
+            if(mouse.x()!==sun.r.x() || mouse.y()!==sun.r.y()){
+                sun.moved = true;
+                sun.r.set(mouse.x(), mouse.y());
+            }
+            
         }
         canvasController.canvas
                 .on("mousemove", mouseMove)
@@ -246,8 +390,8 @@ function OrbitRender() {
                 pos.bounced = true;
             }
             pos.rx += (planet.size * 2);
-            if (pos.rx > canvasController.canvasWidth) {
-                pos.rx = 2 * canvasController.canvasWidth - pos.rx;
+            if (pos.rx > canvasController.canvasWidth()) {
+                pos.rx = 2 * canvasController.canvasWidth() - pos.rx;
                 pos.vx = 0 - pos.vx;
                 pos.bounced = true;
             }
@@ -260,8 +404,8 @@ function OrbitRender() {
                 pos.bounced = true;
             }
             pos.ry += (planet.size * 2);
-            if (pos.ry > canvasController.canvasHeight) {
-                pos.ry = 2 * canvasController.canvasHeight - pos.ry;
+            if (pos.ry > canvasController.canvasHeight()) {
+                pos.ry = 2 * canvasController.canvasHeight() - pos.ry;
                 pos.vy = 0 - pos.vy;
                 pos.bounced = true;
             }
@@ -275,9 +419,36 @@ function OrbitRender() {
             pos.vy = pos2.vy;
         };
         var radius, vTheta, newVtheta, rTheta, v, pos2;
-        var getBounceTime = function(pos, early, late) {
-
+        var wallBounceIter = 0;
+        var wallBounced = function(pos){
+            var max = 0;
+            if(pos.rx < planet.size){
+                max = Math.max(max,planet.size - pos.rx);
+            } 
+            if(pos.ry < planet.size){
+                max = Math.max(max, planet.size - pos.ry);
+            }
+            if(pos.rx > (canvasController.canvasWidth() - planet.size)){
+                max = Math.max(max, pos.rx - (canvasController.canvasWidth() - planet.size));
+            }
+            if(pos.ry > (canvasController.canvasHeight() - planet.size)){
+                max = Math.max(max, (canvasController.canvasHeight() - planet.size));
+            }
+            return max;
         }
+        function wallBounceCheck(pos, time, prevTime){
+            wallBounceIter = 0;
+            if(wallBounced(pos)){
+                pos.bounced = true;
+                return wallBounce(pos, time, prevTime, prevTime, prevTime, time);
+            }
+        }
+        /*var wallBounce = function(pos, time, prevTime, checkTime, minTime, maxTime){
+            wallBounceIter++;
+            if(wallBounceIter>100) return;
+            pos2 = orbitalCalculator.atTime(checkTime);
+            var x = pos2
+        }*/
         var sunBounceCheckIter = 0;
         var sunBounceCheck = function(pos, time, prevTime) {
             sunBounceCheckIter = 0;
@@ -291,8 +462,8 @@ function OrbitRender() {
             sunBounceCheckIter++;
             if(sunBounceCheckIter>100) return;
             pos2 = orbitalCalculator.atTime(checkTime);
-            var x = pos2.rx - (sun.v.x()*(checkTime-prevTime));
-            var y = pos2.ry + (sun.v.y()*(checkTime-prevTime));
+            var x = pos2.rx// - (sun.v.x()*(checkTime-prevTime));
+            var y = pos2.ry// - (sun.v.y()*(checkTime-prevTime));
             var radius = Math.sqrt(sq(x) + sq(y));
             if (radius - (sun.size + planet.size) > .1) {
                 return sunBounce(pos, time, prevTime, (checkTime + maxTime) / 2, checkTime, maxTime);
@@ -306,15 +477,15 @@ function OrbitRender() {
                 posCopy(pos, pos2);
                 pos.vx = v * Math.cos(newVtheta);
                 pos.vy = v * Math.sin(newVtheta);
-                orbitalCalculator.recalibrate(orbitalCalculator.timeInit + checkTime, pos.rx, pos.ry, pos.vx+sun.v.x(), pos.vy+sun.v.y());
+                orbitalCalculator.recalibrate(orbitalCalculator.timeInit + checkTime, pos.rx, pos.ry, pos.vx/*+sun.v.x()/4*/, pos.vy/*+sun.v.y()/4*/);
                 canvasController.orbitRender.set(orbitalCalculator.orbit, grav);
                 pos2 = orbitalCalculator.atTime(time - checkTime);
                 posCopy(pos, pos2);
-                console.log("sunBounceCheckIter:" + sunBounceCheckIter);
             }
         }
         var pos;
         var movePlanet = function(time, prevTime) {
+            planet.recalibrate = false;
             pos = orbitalCalculator.atTime(time);  //this spits out canvas ball vector minus canvas mouse vector;
             if (!pos) {
                 pos.rx = 100;
@@ -340,9 +511,17 @@ function OrbitRender() {
             planet.v.set(pos.vx, pos.vy);
             planet.e = pos.e;
 
-            return pos.bounced;
+            planet.recalibrate = pos.bounced;
         };
-        return {movePlanet: movePlanet};
+        var rTheta;
+        var adjustForSun = function(){
+            if(distance(planet.r.x(), planet.r.y(), sun.r.x(), sun.r.y())<(sun.size+planet.size)){
+                rTheta = Math.atan2( planet.r.y()-sun.r.y(), planet.r.x()-sun.r.x());
+                planet.r.set(sun.r.x()+(sun.size+planet.size)*Math.cos(rTheta), sun.r.y()+(sun.size+planet.size)*Math.sin(rTheta))
+                //canvasController.drawBody(dummy, "#888");
+            }
+        }
+        return {movePlanet: movePlanet, adjustForSun: adjustForSun};
     };
     var planetController = new PlanetController(planet, sun, canvasController, orbitalCalculator);
 
@@ -362,7 +541,7 @@ function OrbitRender() {
             ellapsed = timestamp - frameCounterTimeInit;
             if (ellapsed > rateRefresh) {
                 fps = (1000 * frameCounter / ellapsed).toPrecision(2);
-                $("#speed").text("fps: " + fps);
+                $("#fps").text("fps: " + fps);
                 frameCounterTimeInit = timestamp;
                 frameCounter = 0;
             }
@@ -375,13 +554,23 @@ function OrbitRender() {
             }
             if (pause) {
                 orbitalCalculator.timeInit = timestamp - prevTime;
-            } else {
-                recalibrate = planetController.movePlanet(timestamp - orbitalCalculator.timeInit, prevTime);
+            } 
+            
+            if(!pause) {
+                planetController.movePlanet(timestamp - orbitalCalculator.timeInit, prevTime)
+                recalibrate = recalibrate || planet.recalibrate;
+                
             }
-            recalibrate = recalibrate || sunController.moveSun();
-            if (recalibrate) {
+            sunController.moveSun(timestamp - orbitalCalculator.timeInit, prevTime)
+            recalibrate = recalibrate || sun.moved;
+            canvasController.clear();
+            
+            planetController.adjustForSun();
+            
+            if (recalibrate || !canvasController.orbitRender.initialized()) {
                 orbitalCalculator.recalibrate();
                 canvasController.orbitRender.set(orbitalCalculator.orbit, grav);
+                scoreKeeper.recalibrate();
             }
             /*try {
              $("#alpha").text(
@@ -396,16 +585,17 @@ function OrbitRender() {
              
              }*/
 
-            canvasController.clear();
             if (showOrbit) {
                 canvasController.orbitRender.drawOrbit();
             }
-            canvasController.drawBody(sun, "#8ED6FF");
-            canvasController.drawBody(planet, "blue");
+            canvasController.drawBody(sun);
+            canvasController.drawBody(planet);
             if(pause){
                 canvasController.drawLine(planet.r.x(), planet.r.y(), planet.r.x()+100*planet.v.x(), planet.r.y()+100*planet.v.y(), "green")
             }
-
+            scoreKeeper.frameReady();
+            $("#speed").text(planet.v.length().toPrecision(3))
+            $("#energy").text((.5*sq(planet.v.length()) - grav/distance(planet.r.x(),planet.r.y(),sun.r.x(),sun.r.y())).toPrecision(3));
             prevTime = timestamp - orbitalCalculator.timeInit;
             reqAnimFrame(function(timestamp) {
                 animController.doTime(timestamp);

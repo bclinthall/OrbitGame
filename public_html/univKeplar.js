@@ -144,6 +144,7 @@ function OrbitalCalculator(){
         orbit.h = h;
         orbit.e = e;
         orbit.a = 2/alpha;
+        orbit.period = Math.PI * 2 * Math.sqrt(Math.pow(orbit.a/2,3)/grav);
         orbit.nu = nu;
         orbit.rotate = rotate;
         orbit.shift = shift;
