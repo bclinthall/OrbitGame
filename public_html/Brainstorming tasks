@@ -1,8 +1,0 @@
-Orbit.
-Orbit clockwise then counterclockwise.  No bouncing.
-Orbit with e < .5, e < .25, e<.1
-Orbit, go e > 1, orbit.  (a) Bounce ok, (b) no bounce.
-Get speed > 1;
-Go speed > 1 then orbit.
-Orbit with a < 100, < 90, < 80
-Four corners: get within x of each corner without hitting a wall.
