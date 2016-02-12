@@ -55,16 +55,34 @@ function OrbitRender() {
                 height: canvasHeight
             });
         };
+        var sizeParent = $(".canvasSizeParent")
+        sizeParent.css({
+                width: "1000px",
+                height: "600px",
+                right:"",
+                bottom:""
+            })
+        $("#variableSize").on("change", function(){
+            if($(this).is(":checked")){
+                sizeParent.css({
+                    width: "",
+                    height: "",
+                    right:"20px",
+                    bottom:"20px"
+                })
+            }else{
+                sizeParent.css({
+                    width: "1000px",
+                    height: "600px",
+                    right:"",
+                    bottom:""
+                })
+            }
+            onScroll();
+            resize();
+        })
         onScroll();
         resize();
-        if(window.resizeTo){
-            $("#resizeBtn").show();
-            $("#resizeBtn").click(function(){
-                window.resizeTo(660, 1220);
-            })
-        }else{
-            $("#resizeBtn").hide();
-        }
         
         $(window).resize(resize);
         $(".canvasScrollParent").scroll(onScroll);

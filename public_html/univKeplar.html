@@ -35,10 +35,7 @@ and open the template in the editor.
             #canvasDiv{
                 position: absolute;
                 top: 10px;
-                bottom: 20px;
                 left: 200px;
-                width: 1000px;
-                height: 600px;
                 margin: 0px;
             }
             #adBarLeft{
@@ -85,6 +82,10 @@ and open the template in the editor.
             .goal.incomplete:before{
                 content:"\2610";
             }
+            #variableSizeLabel{
+                padding-left: 20px;
+               
+            }
         </style>
 
         <script type="text/javascript" src="univKeplar.js"></script>
@@ -104,13 +105,13 @@ and open the template in the editor.
 
                 <span class="control">Show Path: <input id="showPath" type ="checkbox"></span>
                 <button id="pause">Pause</button>
-                <button id="resizeBtn">Make Window Appropriate Size</button>
+                <label id="variableSizeLabel" for="variableSize">Allow game to resize with window</label><input id="variableSize" type="checkbox">
             </div>
             
         </div>
         <div id="content" class="canvasScrollParent">
             
-            <div id="canvasDiv">
+            <div id="canvasDiv" class="canvasSizeParent">
                 <div id="statsDiv">
                 <div><span id="stats"></span></div>
                 <div><span id="fps"></span></div>
