@@ -81,6 +81,7 @@ function OrbitRender() {
             onScroll();
             resize();
         })
+        $("#variableSize").trigger("change");
         onScroll();
         resize();
         
