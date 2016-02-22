@@ -394,10 +394,12 @@ function OrbitRender() {
         var radius;
         function touchmove(e){
             if (e.targetTouches.length === 1) {
-                e = e.targetTouches[0];
-                var eventCanvasCoords = canvasController.eventCanvasCoords(e);
+                var touch = e.targetTouches[0];
+                var eventCanvasCoords = canvasController.eventCanvasCoords(touch);
                 if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
-                    canvasController.eventCanvasCoords(e, mouse);
+                    touch.preventDefault();
+                    touch.stopPropagation();
+                    canvasController.eventCanvasCoords(touch, mouse);
                 }
             }
         }
@@ -415,11 +417,12 @@ function OrbitRender() {
             
         }
         canvasController.canvas
-                .on("touchmove", touchmove)
+                //.on("touchmove", touchmove)
                 .on("mousemove", mouseMove)
                 .on("mouseup touchend", mouseUp)
                 .mouseleave(mouseUp)
                 .on("mousedown touchend", mouseDown);
+        canvasController.canvas[0].addEventListener("touchmove", touchmove);
         return {mouse: mouse, moveSun: moveSun};
     };
     var sunController = new SunController(sun, canvasController, orbitalCalculator);
