@@ -10,6 +10,7 @@ and open the template in the editor.
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="jquery-2.1.1.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
         <style>
             body{
                 margin:0px;
@@ -39,6 +40,9 @@ and open the template in the editor.
                 left: 200px;
                 margin: 0px;
             }
+            .hideSidebar #canvasDiv{
+                left: 10px;
+            }
             #adBarLeft{
                 top: 10px;
                 bottom: 20px;
@@ -48,6 +52,9 @@ and open the template in the editor.
                 background-color: #DFD;
                 margin: 0px;
                 position: absolute
+            }
+            .hideSidebar #adBarLeft{
+                display: none;
             }
             #adBarLeft p{
                 margin: 12px 12px;
@@ -59,7 +66,7 @@ and open the template in the editor.
                 border: 1px solid black;
             }
             .control{
-                margin-right: 20px;
+                margin-right: 10px;
                 display: inline-block;
             }
             .stat{
@@ -90,6 +97,14 @@ and open the template in the editor.
                 padding-left: 20px;
                
             }
+            .faToggle{
+                margin: -5px 0px;
+                padding: 5px;
+                border-radius: 20px;
+            }
+            .faToggle.toggleChecked{
+                background-color: rgba(0,0,0,0.5);
+            }
         </style>
 
         <script type="text/javascript" src="univKeplar.js"></script>
@@ -98,6 +113,12 @@ and open the template in the editor.
             $(function() {
                 new OrbitRender().start();
                 //570 vs 350
+                /*$(".faToggle").click(function(){
+                    $(this).toggleClass("toggleChecked")
+                })
+                $("#showSidebar").click(function(){
+                    $("body").toggleClass("hideSidebar");
+                })*/
             })
         </script>
     </head>
@@ -107,9 +128,12 @@ and open the template in the editor.
                 <!--<button id="start" onclick="onStart();">Start</button>vx:<input id="vx"> vy:<input id="vy"> rx:<input id="rx"> ry:<input id="ry"> -->
                 <span class="control">grav:<input type="number" value="5" id="grav"></span>
 
-                <span class="control">Show Path: <input id="showPath" type ="checkbox"></span>
+                <span class="control"><label for="showPath">Show Path:</label><input id="showPath" type ="checkbox"></span>
                 <button id="pause">Pause</button>
-                <label id="variableSizeLabel" for="variableSize">Allow game to resize with window</label><input id="variableSize" type="checkbox" checked='checked'>
+                <i class="fa fa-columns fa-fw faToggle toggleChecked" id="showSidebar"></i>
+                <i class="fa fa-expand fa-fw faToggle" id="variableSize"></i>
+                
+                <!--<label id="variableSizeLabel" for="variableSize">Allow game to resize with window</label><input id="variableSize" type="checkbox" checked='checked'>-->
             </div>
             
         </div>
@@ -131,12 +155,10 @@ and open the template in the editor.
             </div>
 
             <div id="adBarLeft">
-                    <p>Click on the sun to pick it up.  </p>
-                    <p>Move it around with the mouse. </p>
-                    <p>Click again to put it down.</p>
-                    <p>Try it with and without "Show Path" checked. </p>
-                    <p>You get the smoothest animations using Google's 
-                        <a href="https://www.google.com/chrome/browser/desktop/index.html">Chrome browser</a></p>
+                <p>Drag the sun to move it around</p>    
+                <p>Try it with and without "Show Path" checked. </p>
+                <p>You get the smoothest animations using Google's 
+                    <a href="https://www.google.com/chrome/browser/desktop/index.html">Chrome browser</a></p>
                 
             </div>
         </div>

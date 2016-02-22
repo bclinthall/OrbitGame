@@ -1,10 +1,10 @@
-function distance(x1, y1, x2, y2){
-    return (Math.sqrt(sq(x2-x1)+sq(y2-y1)));
+function distance(x1, y1, x2, y2) {
+    return (Math.sqrt(sq(x2 - x1) + sq(y2 - y1)));
 }
 function OrbitRender() {
     var sun = {
         r: new Vect(200, 200),
-        v: new Vect(0,0),
+        v: new Vect(0, 0),
         size: 15,
         moving: false,
         color: "#DDA"
@@ -44,12 +44,28 @@ function OrbitRender() {
         var canvasOffset = $(canvas).offset();
         var canvasWidth;
         var canvasHeight;
-        var onScroll = function(){
+        var onScroll = function() {
             canvasOffset = $(canvas).offset();
         }
+        var iWidth = 800;
+        var iHeight = 500;
+        
         var resize = function() {
             canvasWidth = canvas.width();
             canvasHeight = canvas.height();
+            if ($("#variableSize").hasClass("toggleChecked")) {
+                var content = $("#content");
+                console.log(content[0].scrollWidth, content.width(),
+                        content[0].scrollHeight, content.height())
+                if (content[0].scrollWidth > content.width()
+                        && content[0].scrollHeight > content.height()) {
+                    $("#variableSize").addClass("fa-compress")
+                    $("#variableSize").removeClass("fa-expand")
+                } else {
+                    $("#variableSize").removeClass("fa-compress")
+                    $("#variableSize").addClass("fa-expand")
+                }
+            }
             canvas.prop({
                 width: canvasWidth,
                 height: canvasHeight
@@ -57,34 +73,54 @@ function OrbitRender() {
         };
         var sizeParent = $(".canvasSizeParent")
         sizeParent.css({
-                width: "1000px",
-                height: "600px",
-                right:"",
-                bottom:""
-            })
-        $("#variableSize").on("change", function(){
-            if($(this).is(":checked")){
+            width: iWidth + "px",
+            height: iHeight + "px",
+            right: "",
+            bottom: ""
+        })
+        function toggleVariableSize() {
+            resize();
+            if (!$("#variableSize").hasClass("toggleChecked")) {
+                $("#variableSize").addClass("toggleChecked");
                 sizeParent.css({
                     width: "",
                     height: "",
-                    right:"20px",
-                    bottom:"20px"
+                    right: "20px",
+                    bottom: "20px"
                 })
-            }else{
+            } else {
+                $("#variableSize").removeClass("toggleChecked");
                 sizeParent.css({
-                    width: "1000px",
-                    height: "600px",
-                    right:"",
-                    bottom:""
+                    width: iWidth + "px",
+                    height: iHeight + "px",
+                    right: "",
+                    bottom: ""
                 })
             }
             onScroll();
+        }
+        /*$(".faToggle").click(function() {
+            $(this).toggleClass("toggleChecked")
+        })*/
+        $("#showSidebar").click(function() {
+            if(!$(this).hasClass("toggleChecked")){
+                $(this).addClass("toggleChecked");
+                $("body").removeClass("hideSidebar");
+            }else{
+                $(this).removeClass("toggleChecked");
+                $("body").addClass("hideSidebar");
+            }
             resize();
         })
-        $("#variableSize").trigger("change");
+        if(!$("#showSidebar").hasClass("toggleChecked")){
+            $("body").addClass("hideSidebar");
+        }
+        $("#variableSize").on("click", function() {
+            toggleVariableSize();
+        })
         onScroll();
         resize();
-        
+
         $(window).resize(resize);
         $(".canvasScrollParent").scroll(onScroll);
 
@@ -96,10 +132,10 @@ function OrbitRender() {
             context.fillStyle = body.color;
             context.strokeStyle = body.color;
             context.beginPath();
-            if(!body.moving){
-                context.arc(body.r.x(), canvasHeight - body.r.y(), body.size +1, 0, eAngle);
+            if (!body.moving) {
+                context.arc(body.r.x(), canvasHeight - body.r.y(), body.size + 1, 0, eAngle);
                 context.fill();
-            }else{
+            } else {
                 context.arc(body.r.x(), canvasHeight - body.r.y(), body.size, 0, eAngle);
                 context.fill();
                 context.strokeStyle = "#000";
@@ -109,10 +145,10 @@ function OrbitRender() {
 //                context.arc(body.r.x(), canvasHeight - body.r.y(), body.size*.67, 0, eAngle);
 //                context.stroke();
             }
-            
-            
+
+
         };
-        var drawArc = function(cx, cy, radius, startAngle, endAngle, ccw, color){
+        var drawArc = function(cx, cy, radius, startAngle, endAngle, ccw, color) {
             context.beginPath();
             context.strokeStyle = color
             context.arc(cx, canvasHeight - cy, radius, startAngle, endAngle, ccw);
@@ -121,7 +157,7 @@ function OrbitRender() {
         function OrbitRender() {
             var h, e, a, grav, r, x, y, period, angle, nu, rotate, shift, _initialized;
             function set(orbit, _grav) {
-                
+
                 h = orbit.h;
                 e = orbit.e;
                 a = orbit.a;
@@ -129,7 +165,7 @@ function OrbitRender() {
                 rotate = orbit.rotate
                 shift = orbit.shift;
                 grav = _grav;
-                if(h!==0){
+                if (h !== 0) {
                     _initialized = true;
                 }
                 var rMinusN = rotate - nu;
@@ -138,13 +174,13 @@ function OrbitRender() {
                     rMinusN += 360;
                 rMinusN = rMinusN.toPrecision(3);
                 $("#stats").html(
-                        "<span class='stat'>"+ h.toPrecision(3) +"</span>h (orbital energy)" + 
+                        "<span class='stat'>" + h.toPrecision(3) + "</span>h (orbital energy)" +
                         "<br> <span class='stat'>" + e.toPrecision(3) + "</span>e (orbital eccentricity)" +
                         "<br> <span class='stat'>" + a.toPrecision(3) + "</span>a (major radius)" +
-                        "<br> <span class='stat'>" + (orbit.period/1000).toPrecision(3) + "</span>T (period)"
-                );
+                        "<br> <span class='stat'>" + (orbit.period / 1000).toPrecision(3) + "</span>T (period)"
+                        );
             }
-            function initialized(){
+            function initialized() {
                 return _initialized;
             }
             function get_r(theta) {
@@ -158,7 +194,7 @@ function OrbitRender() {
                 var i0 = Math.round(nu * 180 / Math.PI);
                 var iF = i0 + 179;
                 //for(var i=i0; i<iF; i++){
-                if(!pause){
+                if (!pause) {
                     for (var i = 0; i < 360; i++) {
                         angle = i * Math.PI / 180;
                         r = get_r(angle);
@@ -173,15 +209,15 @@ function OrbitRender() {
                     }
                     context.stroke();
                 } else {
-                    var startAngle = Math.atan2(planet.r.y()-sun.r.y(), planet.r.x()-sun.r.x()) - shift;
-                    var sincePause = Date.now()-pauseStartTime;
+                    var startAngle = Math.atan2(planet.r.y() - sun.r.y(), planet.r.x() - sun.r.x()) - shift;
+                    var sincePause = Date.now() - pauseStartTime;
                     sincePause = sincePause / 3000;
-                    
+
                     angle = Math.PI * 2 * sincePause;
-                    
-                    if(h>0){
+
+                    if (h > 0) {
                         angle += startAngle;
-                        for (var i = startAngle; i < angle; i+=.01) {
+                        for (var i = startAngle; i < angle; i += .01) {
                             r = get_r(i);
                             x = r * Math.cos(i + shift) + sun.r.x();
                             y = canvasHeight - (r * Math.sin(i + shift) + sun.r.y());
@@ -193,12 +229,12 @@ function OrbitRender() {
                             }
                         }
                         context.stroke();
-                    
-                    }else{
-                        angle*=-1;
+
+                    } else {
+                        angle *= -1;
                         angle += startAngle;
                         r = get_r(angle);
-                        for (var i = startAngle; i > angle; i-=.01) {
+                        for (var i = startAngle; i > angle; i -= .01) {
                             r = get_r(i);
                             x = r * Math.cos(i + shift) + sun.r.x();
                             y = canvasHeight - (r * Math.sin(i + shift) + sun.r.y());
@@ -211,12 +247,12 @@ function OrbitRender() {
                         }
                         context.stroke();
                     }
-                    
-                    
-                    
+
+
+
 
                 }
-                
+
             }
             return {drawOrbit: drawOrbit, set: set, initialized: initialized};
         }
@@ -243,8 +279,12 @@ function OrbitRender() {
             drawBody: drawBody,
             eventCanvasCoords: eventCanvasCoords,
             canvas: canvas,
-            canvasWidth: function() {return canvasWidth},
-            canvasHeight: function() {return canvasHeight},
+            canvasWidth: function() {
+                return canvasWidth
+            },
+            canvasHeight: function() {
+                return canvasHeight
+            },
             orbitRender: orbitRender,
             drawLine: drawLine,
             drawArc: drawArc
@@ -268,125 +308,126 @@ function OrbitRender() {
         $("#showPath").on("click", getShowOrbit);
         var togglePause = function() {
             pause = !pause;
-            if(pause){
+            if (pause) {
                 pauseStartTime = Date.now();
             }
         }
         $("#pause").click(togglePause);
-        $(window).on("keydown", function(e){
-            if(e.which===32){
+        $(window).on("keydown", function(e) {
+            if (e.which === 32) {
                 togglePause();
-            };
+            }
+            ;
         })
     }
     controlsSetup();
-    var Task = function(){
+    var Task = function() {
         var eventsToComplete = [];
         var eventsThatResetAll;
         var eventListener;
         var frameCheck;
         var nextGoal = 0;
-        function writeChecklist(){
+        function writeChecklist() {
             $("#goals").empty();
-            for(var i=0; i<eventsToComplete.length; i++){
+            for (var i = 0; i < eventsToComplete.length; i++) {
                 $("<div>").addClass("goal").text(eventsToComplete[i].name).appendTo("#goals");
             }
         }
-        function goalComplete(){
+        function goalComplete() {
             $("#goals .goal").eq(nextGoal).addClass("complete");
             nextGoal++;
         }
-        function resetGoal(){
-            $("#goals .goal").eq(nextGoal-1).removeClass("complete");
+        function resetGoal() {
+            $("#goals .goal").eq(nextGoal - 1).removeClass("complete");
             nextGoal--;
         }
-        function resetAll(){
+        function resetAll() {
             $("#goals .goal").removeClass("complete");
             nextGoal = 0;
         }
-        function eventHappened(event){
-            if(nextGoal > 0 && eventsToComplete[nextGoal-1].reset(event)){
+        function eventHappened(event) {
+            if (nextGoal > 0 && eventsToComplete[nextGoal - 1].reset(event)) {
                 resetGoal();
                 return;
             }
-            if(eventsThatResetAll(event)){
+            if (eventsThatResetAll(event)) {
                 resetAll();
             }
-            if(eventsToComplete[nextGoal].complete("event",event)){
+            if (eventsToComplete[nextGoal].complete("event", event)) {
                 goalComplete();
                 return;
             }
             eventListener(event, eventsToComplete, eventsThatResetAll, nextGoal);
         }
-        
-        function checkFrame(planet, sun, orbit, eventsToComplete, eventsThatResetAll, nextGoal){
+
+        function checkFrame(planet, sun, orbit, eventsToComplete, eventsThatResetAll, nextGoal) {
             frameCheck(planet, sun, orbit, eventsToComplete, eventsThatResetAll, nextGoal);
         }
-        function setup(eventsToComplete, ecent){
+        function setup(eventsToComplete, ecent) {
             frameCheck = _frameCheck;
         }
-        
-        function init(){
+
+        function init() {
             resetAll();
             writeChecklist();
             listenerSetup();
         }
-        
+
     }
-    var ScoreKeeper = function(){
+    var ScoreKeeper = function() {
         var orbiting = false;
         var orbitStartAngle = 0;
         var orbitStartTime = 0;
         var orbitCurrentAngle = 0;
         var orbitCompleted = false;
         var x, y;
-        function refresh(){
+        function refresh() {
             x = planet.r.x() - sun.r.x();
             y = planet.r.y() - sun.r.y();
         }
-        function restartOrbit(){
+        function restartOrbit() {
             orbiting = false;
-            if(orbitalCalculator.orbit.e < 1){
+            if (orbitalCalculator.orbit.e < 1) {
                 refresh();
-                orbitStartAngle = Math.PI*2 - Math.atan2(y,x);
+                orbitStartAngle = Math.PI * 2 - Math.atan2(y, x);
                 sun.color = "#ED4";
                 orbiting = true;
                 orbitCompleted = false;
             }
         }
-        function frameReady(){
-            if(orbiting){
+        function frameReady() {
+            if (orbiting) {
                 refresh();
-                orbitCurrentAngle = Math.PI*2 - Math.atan2(y,x)
-                if(!orbitCompleted){
-                    canvasController.drawArc(sun.r.x(), sun.r.y(), sun.size*.9, orbitStartAngle, orbitCurrentAngle, orbitalCalculator.orbit.h > 0, "brown" );
+                orbitCurrentAngle = Math.PI * 2 - Math.atan2(y, x)
+                if (!orbitCompleted) {
+                    canvasController.drawArc(sun.r.x(), sun.r.y(), sun.size * .9, orbitStartAngle, orbitCurrentAngle, orbitalCalculator.orbit.h > 0, "brown");
                 }
                 //orbitCurrentAngle = orbitCurrentAngle < orbitStartAngle ? orbitCurrentAngle : orbitCurrentAngle + Math.PI * 2;
                 //if(orbitalCalculator.timestamp - orbitalCalculator.timeInit > orbitalCalculator){}
-                    
-                if(!orbitCompleted && orbitalCalculator.timestamp - orbitalCalculator.timeInit > orbitalCalculator.orbit.period){
+
+                if (!orbitCompleted && orbitalCalculator.timestamp - orbitalCalculator.timeInit > orbitalCalculator.orbit.period) {
                     orbitCompleted = true;
                     sun.color = "yellow";
                 }
             }
         }
-        function sunBounce(){
+        function sunBounce() {
             restartOrbit();
         }
-        function recalibrate(){
+        function recalibrate() {
             restartOrbit();
         }
         return {recalibrate: recalibrate, frameReady: frameReady};
     }
     var scoreKeeper = new ScoreKeeper();
     var SunController = function(sun, canvasController, orbitalCalculator) {
-        var mouse = new Vect(100,100)
+        var mouse = new Vect(100, 100)
         function mouseUp() {
             sun.moving = false;
         }
         function mouseDown(e) {
-            if(e.originalEvent.targetTouches && e.originalEvent.targetTouches.length===1){
-                e =e.originalEvent.targetTouches[0]
+            if (e.originalEvent.targetTouches && e.originalEvent.targetTouches.length === 1) {
+                e = e.originalEvent.targetTouches[0]
             }
             var eventCanvasCoords = canvasController.eventCanvasCoords(e);
             if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
@@ -395,14 +436,14 @@ function OrbitRender() {
             }
         }
         var radius;
-        function touchmove(e){
+        function touchmove(e) {
             if (e.targetTouches.length === 1 && sun.moving) {
                 var touch = e.targetTouches[0];
                 var eventCanvasCoords = canvasController.eventCanvasCoords(touch);
                 //if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    canvasController.eventCanvasCoords(touch, mouse);
+                e.preventDefault();
+                e.stopPropagation();
+                canvasController.eventCanvasCoords(touch, mouse);
                 //}
             }
         }
@@ -413,11 +454,11 @@ function OrbitRender() {
         }
         function moveSun(time, prevTime) {
             sun.moved = false;
-            if(mouse.x()!==sun.r.x() || mouse.y()!==sun.r.y()){
+            if (mouse.x() !== sun.r.x() || mouse.y() !== sun.r.y()) {
                 sun.moved = true;
                 sun.r.set(mouse.x(), mouse.y());
             }
-            
+
         }
         canvasController.canvas
                 //.on("touchmove", touchmove)
@@ -468,35 +509,35 @@ function OrbitRender() {
         };
         var radius, vTheta, newVtheta, rTheta, v, pos2;
         var wallBounceIter = 0;
-        var wallBounced = function(pos){
+        var wallBounced = function(pos) {
             var max = 0;
-            if(pos.rx < planet.size){
-                max = Math.max(max,planet.size - pos.rx);
-            } 
-            if(pos.ry < planet.size){
+            if (pos.rx < planet.size) {
+                max = Math.max(max, planet.size - pos.rx);
+            }
+            if (pos.ry < planet.size) {
                 max = Math.max(max, planet.size - pos.ry);
             }
-            if(pos.rx > (canvasController.canvasWidth() - planet.size)){
+            if (pos.rx > (canvasController.canvasWidth() - planet.size)) {
                 max = Math.max(max, pos.rx - (canvasController.canvasWidth() - planet.size));
             }
-            if(pos.ry > (canvasController.canvasHeight() - planet.size)){
+            if (pos.ry > (canvasController.canvasHeight() - planet.size)) {
                 max = Math.max(max, (canvasController.canvasHeight() - planet.size));
             }
             return max;
         }
-        function wallBounceCheck(pos, time, prevTime){
+        function wallBounceCheck(pos, time, prevTime) {
             wallBounceIter = 0;
-            if(wallBounced(pos)){
+            if (wallBounced(pos)) {
                 pos.bounced = true;
                 return wallBounce(pos, time, prevTime, prevTime, prevTime, time);
             }
         }
         /*var wallBounce = function(pos, time, prevTime, checkTime, minTime, maxTime){
-            wallBounceIter++;
-            if(wallBounceIter>100) return;
-            pos2 = orbitalCalculator.atTime(checkTime);
-            var x = pos2
-        }*/
+         wallBounceIter++;
+         if(wallBounceIter>100) return;
+         pos2 = orbitalCalculator.atTime(checkTime);
+         var x = pos2
+         }*/
         var sunBounceCheckIter = 0;
         var sunBounceCheck = function(pos, time, prevTime) {
             sunBounceCheckIter = 0;
@@ -508,7 +549,8 @@ function OrbitRender() {
         }
         var sunBounce = function(pos, time, prevTime, checkTime, minTime, maxTime) {
             sunBounceCheckIter++;
-            if(sunBounceCheckIter>100) return;
+            if (sunBounceCheckIter > 100)
+                return;
             pos2 = orbitalCalculator.atTime(checkTime);
             var x = pos2.rx// - (sun.v.x()*(checkTime-prevTime));
             var y = pos2.ry// - (sun.v.y()*(checkTime-prevTime));
@@ -562,10 +604,10 @@ function OrbitRender() {
             planet.recalibrate = pos.bounced;
         };
         var rTheta;
-        var adjustForSun = function(){
-            if(distance(planet.r.x(), planet.r.y(), sun.r.x(), sun.r.y())<(sun.size+planet.size)){
-                rTheta = Math.atan2( planet.r.y()-sun.r.y(), planet.r.x()-sun.r.x());
-                planet.r.set(sun.r.x()+(sun.size+planet.size)*Math.cos(rTheta), sun.r.y()+(sun.size+planet.size)*Math.sin(rTheta))
+        var adjustForSun = function() {
+            if (distance(planet.r.x(), planet.r.y(), sun.r.x(), sun.r.y()) < (sun.size + planet.size)) {
+                rTheta = Math.atan2(planet.r.y() - sun.r.y(), planet.r.x() - sun.r.x());
+                planet.r.set(sun.r.x() + (sun.size + planet.size) * Math.cos(rTheta), sun.r.y() + (sun.size + planet.size) * Math.sin(rTheta))
                 //canvasController.drawBody(dummy, "#888");
             }
         }
@@ -602,19 +644,19 @@ function OrbitRender() {
             }
             if (pause) {
                 orbitalCalculator.timeInit = timestamp - prevTime;
-            } 
-            
-            if(!pause) {
+            }
+
+            if (!pause) {
                 planetController.movePlanet(timestamp - orbitalCalculator.timeInit, prevTime)
                 recalibrate = recalibrate || planet.recalibrate;
-                
+
             }
             sunController.moveSun(timestamp - orbitalCalculator.timeInit, prevTime)
             recalibrate = recalibrate || sun.moved;
             canvasController.clear();
-            
+
             planetController.adjustForSun();
-            
+
             if (recalibrate || !canvasController.orbitRender.initialized()) {
                 orbitalCalculator.recalibrate();
                 canvasController.orbitRender.set(orbitalCalculator.orbit, grav);
@@ -638,12 +680,12 @@ function OrbitRender() {
             }
             canvasController.drawBody(sun);
             canvasController.drawBody(planet);
-            if(pause){
-                canvasController.drawLine(planet.r.x(), planet.r.y(), planet.r.x()+100*planet.v.x(), planet.r.y()+100*planet.v.y(), "green")
+            if (pause) {
+                canvasController.drawLine(planet.r.x(), planet.r.y(), planet.r.x() + 100 * planet.v.x(), planet.r.y() + 100 * planet.v.y(), "green")
             }
             scoreKeeper.frameReady();
             $("#speed").text(planet.v.length().toPrecision(3))
-            $("#energy").text((.5*sq(planet.v.length()) - grav/distance(planet.r.x(),planet.r.y(),sun.r.x(),sun.r.y())).toPrecision(3));
+            $("#energy").text((.5 * sq(planet.v.length()) - grav / distance(planet.r.x(), planet.r.y(), sun.r.x(), sun.r.y())).toPrecision(3));
             prevTime = timestamp - orbitalCalculator.timeInit;
             reqAnimFrame(function(timestamp) {
                 animController.doTime(timestamp);
