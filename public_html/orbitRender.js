@@ -380,7 +380,7 @@ function OrbitRender() {
     }
     var scoreKeeper = new ScoreKeeper();
     var SunController = function(sun, canvasController, orbitalCalculator) {
-        var mouse = new Vect(100,100)
+        var mouse = new Vect(50,50)
         function mouseUp() {
             sun.moving = false;
         }
@@ -392,7 +392,12 @@ function OrbitRender() {
             }
         }
         var radius;
-        
+        function touchmove(e){
+            var eventCanvasCoords = canvasController.eventCanvasCoords(e);
+            if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
+                canvasController.eventCanvasCoords(e, mouse);
+            }
+        }
         function mouseMove(e) {
             if (sun.moving) {
                 canvasController.eventCanvasCoords(e, mouse);
@@ -407,7 +412,8 @@ function OrbitRender() {
             
         }
         canvasController.canvas
-                .on("mousemove touchmove", mouseMove)
+                .on("touchmove", touchmove)
+                .on("mousemove", mouseMove)
                 .on("mouseup touchend", mouseUp)
                 .mouseleave(mouseUp)
                 .on("mousedown touchend", mouseDown);
