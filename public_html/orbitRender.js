@@ -385,6 +385,9 @@ function OrbitRender() {
             sun.moving = false;
         }
         function mouseDown(e) {
+            if(e.originalEvent.targetTouches && e.originalEvent.targetTouches.length===1){
+                e =e.originalEvent.targetTouches[0]
+            }
             var eventCanvasCoords = canvasController.eventCanvasCoords(e);
             if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
                 sun.moving = true;
@@ -393,14 +396,14 @@ function OrbitRender() {
         }
         var radius;
         function touchmove(e){
-            if (e.targetTouches.length === 1) {
+            if (e.targetTouches.length === 1 && sun.moving) {
                 var touch = e.targetTouches[0];
                 var eventCanvasCoords = canvasController.eventCanvasCoords(touch);
-                if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
-                    touch.preventDefault();
-                    touch.stopPropagation();
+                //if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     canvasController.eventCanvasCoords(touch, mouse);
-                }
+                //}
             }
         }
         function mouseMove(e) {
@@ -421,7 +424,7 @@ function OrbitRender() {
                 .on("mousemove", mouseMove)
                 .on("mouseup touchend", mouseUp)
                 .mouseleave(mouseUp)
-                .on("mousedown touchend", mouseDown);
+                .on("mousedown touchstart", mouseDown);
         canvasController.canvas[0].addEventListener("touchmove", touchmove);
         return {mouse: mouse, moveSun: moveSun};
     };
