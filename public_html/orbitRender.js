@@ -382,12 +382,13 @@ function OrbitRender() {
     var SunController = function(sun, canvasController, orbitalCalculator) {
         var mouse = new Vect(200,200)
         function mouseUp() {
-            sun.v.set(0,0);
+            sun.moving = false;
         }
         function mouseDown(e) {
             var eventCanvasCoords = canvasController.eventCanvasCoords(e);
             if (Math.sqrt(sq(eventCanvasCoords.x() - mouse.x()) + sq(eventCanvasCoords.y() - mouse.y())) < sun.size) {
-                sun.moving = !sun.moving;
+                sun.moving = true;
+                //sun.moving = !sun.moving;
             }
         }
         var radius;
