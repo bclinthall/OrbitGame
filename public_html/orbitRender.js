@@ -407,7 +407,7 @@ function OrbitRender() {
             
         }
         canvasController.canvas
-                .on("mousemove", mouseMove)
+                .on("mousemove touchmove", mouseMove)
                 .on("mouseup touchend", mouseUp)
                 .mouseleave(mouseUp)
                 .on("mousedown touchend", mouseDown);
