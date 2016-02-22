@@ -380,7 +380,7 @@ function OrbitRender() {
     }
     var scoreKeeper = new ScoreKeeper();
     var SunController = function(sun, canvasController, orbitalCalculator) {
-        var mouse = new Vect(200,200)
+        var mouse = new Vect(100,100)
         function mouseUp() {
             sun.moving = false;
         }
