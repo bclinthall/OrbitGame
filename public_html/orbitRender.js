@@ -79,7 +79,6 @@ function OrbitRender() {
             bottom: ""
         })
         function toggleVariableSize() {
-            resize();
             if (!$("#variableSize").hasClass("toggleChecked")) {
                 $("#variableSize").addClass("toggleChecked");
                 sizeParent.css({
@@ -97,20 +96,17 @@ function OrbitRender() {
                     bottom: ""
                 })
             }
+            resize();
             onScroll();
         }
         /*$(".faToggle").click(function() {
             $(this).toggleClass("toggleChecked")
         })*/
         $("#showSidebar").click(function() {
-            if(!$(this).hasClass("toggleChecked")){
-                $(this).addClass("toggleChecked");
-                $("body").removeClass("hideSidebar");
-            }else{
-                $(this).removeClass("toggleChecked");
-                $("body").addClass("hideSidebar");
-            }
+            $(this).toggleClass("toggleChecked");
+            $("body").toggleClass("hideSidebar");
             resize();
+            onScroll();
         })
         if(!$("#showSidebar").hasClass("toggleChecked")){
             $("body").addClass("hideSidebar");
